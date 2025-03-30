@@ -82,7 +82,7 @@ module.exports = pool;  // Export the pool for use in queries.js
 
 # 5. Queries completion
 - write a function in `queries.js`, for example:
-```
+```javascript
 const getUsers = (request, response) => {
   pool.query('SELECT * FROM users', (error, results) => {
     if (error) {
@@ -185,7 +185,12 @@ const getUsers = (request, response) => {
 // Export the function so it can be used in other files
 module.exports = {
     getUsers
-  };
+};
+```
+## .gitignore
+```
+FOLDER_NAME/node_modules/
+pooling.js
 ```
 # 9. Test, study and play along with backend
 If you've done everything correctly, you should see this after entering `http://localhost:3000/users` to postman
