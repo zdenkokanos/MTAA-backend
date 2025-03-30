@@ -22,6 +22,8 @@ app.get('/', (request, response) => {
 
 // Define routes, endpoints for functionality
 app.get('/users', db.getUsers);
+app.get('/users/info/:id', db.getUserInfo);
+app.get('/users/id/:email', db.getUserId);
 
 // Start the server and listen on specified port
 app.listen(port, () => {
