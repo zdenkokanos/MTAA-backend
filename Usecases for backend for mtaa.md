@@ -2,8 +2,8 @@
 
 # 1. User operations
 ✔ get all users ✔
-- get information about user () -> (first_name, last_name, email, age, gender, prefSports, city(longtitude/latitude))
-- get user ID based on email (email) -> id
+✔ get information about user () -> (first_name, last_name, email, age, gender, prefSports, city(longtitude/latitude)) ✔
+✔ get user ID based on email (email) -> id ✔
 
 - user registration (first_name, last_name, email, password, age, gender, prefSports, city(longtitude/latitude)) -> successfull registration
 - user login (email, password) -> successfull login
