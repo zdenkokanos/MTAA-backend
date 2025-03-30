@@ -1,4 +1,3 @@
-//// index.js
 // Importing required libraries
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -22,6 +21,9 @@ app.get('/', (request, response) => {
 
 // Define routes, endpoints for functionality
 app.get('/users', db.getUsers);
+
+// New route for inserting a new user
+app.post('/users', db.insertUser);
 
 // Start the server and listen on specified port
 app.listen(port, () => {
