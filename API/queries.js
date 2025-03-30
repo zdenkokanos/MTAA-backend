@@ -15,20 +15,20 @@ const getUserInfo = async (requst, response) => {
   try{
     const userID = requst.params.id;
     const { rows } = await pool.query(
-      `select
-      id,
-      first_name,
-      last_name,
-      gender,
-      age,
-      email,
-      prefered_longitude,
-      prefered_latitude,
-      created_at
-    from
-      users
-    where
-      users.id = $1;`, [userID]
+      `SELECT
+        id,
+        first_name,
+        last_name,
+        gender,
+        age,
+        email,
+        preferred_longitude,
+        preferred_latitude,
+        created_at
+      FROM
+        users
+      WHERE
+        users.id = $1;`, [userID]
     );
 
     if (rows.length === 0){
