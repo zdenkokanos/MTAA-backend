@@ -114,7 +114,7 @@ module.exports = {
 # 7. Potentital problems
 ### 1. Permission denied:
 You should manipulate with the database from user that created the database. You do have 2 options how to solve this problem.
-1.  Change `polling.js` to superuser and restart the server with `node index.js`
+1.  Change `pooling.js` to superuser and restart the server with `node index.js`
 2.  Or grant permission from superuser to the user you would like to user for this DB with `psql -U <superuser name> -d <database name>` and for example `GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users TO <database name>;`
 
 ### 2. Changes do not work 
@@ -156,7 +156,7 @@ app.listen(port, () => {
 ```
 ## pooling.js
 ```javascript
-//// polling.js
+//// pooling.js
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: '{username}',
