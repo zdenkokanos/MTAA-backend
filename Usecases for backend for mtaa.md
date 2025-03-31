@@ -7,8 +7,8 @@
 
 ✔ user registration (first_name, last_name, email, password, age, gender, prefSports, city(longtitude/latitude)) -> successfull registration ✔
 ✔ user login (email, password) -> successfull login ✔
-- forgot password (email, password) -> new password
-- edit profile (new first_name, new_lastname, new_email, age, gender) -> //v profile edit-profile
+✔ change password (email, password) -> new password ✔
+- edit profile (new first_name, new_lastname, new_email, age, gender) -> //v profile edit-profile //// Frontend pošle JSON so vsetkymi hodnotami na ktore sa ma zmenit - nemalo by byt tazke v reactNative, lebo si zoberies get/users/info/id a zmenis co treba
 - edit preferences (new prefSport, new city) 
 <!-- - deletion () -> delete user -->
 
@@ -43,6 +43,10 @@
 - getTournaments (userID)
 
 # 6. Notifications
-createNotification (userID, text) ->
-getNotifications (userID) -> {notifications}
-markNotificationAsRead (userID, notificationID) ->
+- createNotification (userID, text) ->
+- getNotifications (userID) -> {notifications}
+- markNotificationAsRead (userID, notificationID) ->
+
+# 7. challanges
+- reset password 
+- premenit age na birthyear
