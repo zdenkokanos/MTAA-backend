@@ -11,9 +11,9 @@ const getUsers = (request, response) => {
     });
 };
 
-const getUserInfo = async (requst, response) => {
+const getUserInfo = async (request, response) => {
   try{
-    const userID = requst.params.id;
+    const userID = request.params.id;
     const { rows } = await pool.query(
       `SELECT
         id,
@@ -41,9 +41,9 @@ const getUserInfo = async (requst, response) => {
   }
 };
 
-const getUserId = async (requst, response) => {
+const getUserId = async (request, response) => {
   try{
-    const userEmail = requst.params.email;
+    const userEmail = request.params.email;
     const { rows } = await pool.query(
       `SELECT id FROM users WHERE trim(email) = $1;`, [userEmail]
     );
