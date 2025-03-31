@@ -24,8 +24,9 @@ app.get('/users', db.getUsers);
 app.get('/users/info/:id', db.getUserInfo);
 app.get('/users/id/:email', db.getUserId);
 
-// New route for inserting a new user
+//Post
 app.post('/users', db.insertUser);
+app.post('/users/login', db.loginUser);
 
 // Start the server and listen on specified port
 app.listen(port, () => {
