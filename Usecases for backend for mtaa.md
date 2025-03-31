@@ -5,23 +5,23 @@
 ✔ get information about user () -> (first_name, last_name, email, age, gender, prefSports, city(longtitude/latitude)) ✔
 ✔ get user ID based on email (email) -> id ✔
 
-- user registration (first_name, last_name, email, password, age, gender, prefSports, city(longtitude/latitude)) -> successfull registration
-- user login (email, password) -> successfull login
+✔ user registration (first_name, last_name, email, password, age, gender, prefSports, city(longtitude/latitude)) -> successfull registration ✔
+✔ user login (email, password) -> successfull login ✔
 - forgot password (email, password) -> new password
-- edit profile (new first_name, new_lastname, new_email, age, gender) ->
+- edit profile (new first_name, new_lastname, new_email, age, gender) -> //v profile edit-profile
 - edit preferences (new prefSport, new city) 
-- deletion () -> delete user
+<!-- - deletion () -> delete user -->
 
 # 2. Tickets
-- generate ticket (userid, tournamentid) -> hash // hash from (userid * tournamentid)??
+- generate ticket (userid, tournamentid) -> hash // generate randomly
 - getTicketID () -> hash
 - get allTickets (userID) -> {tickets}
 - validateTicket (hash) -> validate(yes/no) // hash received from frontend from qr code
 
 # 3. Tournaments 
-- list tournaments (all/category) -> {tournaments}
-- getInfo (toruanmentID) -> tournament info
-- createTournament(name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) -> 
+✔ list tournaments (category) -> {tournaments} ✔
+✔ getInfo (toruanmentID) -> tournament info ✔
+✔ createTournament(name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) ✔
 - editTournament parameters (user_id, NEW: name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) ->
 - tournamentDeletion (userID, tournamentID) ->
 - startTournament (userID, tournamenID) -> change 'ongoling' state
