@@ -21,6 +21,8 @@ app.get('/', (request, response) => {
 
 // Define routes, endpoints for functionality
 app.get('/users', db.getUsers);
+app.get('/users/info/:id', db.getUserInfo);
+app.get('/users/id/:email', db.getUserId);
 
 // New route for inserting a new user
 app.post('/users', db.insertUser);

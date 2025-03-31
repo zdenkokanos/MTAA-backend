@@ -11,25 +11,56 @@ const getUsers = (request, response) => {
     });
 };
 
-// Query to insert a new user into the database
-const insertUser = (request, response) => {
-    const { first_name, last_name, gender, age, email, password, prefered_location, prefered_longitude, prefered_latitude } = request.body;
-
-    // Insert data into the 'users' table
-    pool.query(
-        'INSERT INTO users (first_name, last_name, gender, age, email, password, prefered_location, prefered_longitude, prefered_latitude) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
-        [first_name, last_name, gender, age, email, password, prefered_location, prefered_longitude, prefered_latitude],
-        (error, results) => {
-            if (error) {
-                throw error;
-            }
-            response.status(201).json({ id: results.rows[0].id }); // Return the inserted user ID
-        }
+const getUserInfo = async (requst, response) => {
+  try{
+    const userID = requst.params.id;
+    const { rows } = await pool.query(
+      `SELECT
+        id,
+        first_name,
+        last_name,
+        gender,
+        age,
+        email,
+        preferred_longitude,
+        preferred_latitude,
+        created_at
+      FROM
+        users
+      WHERE
+        users.id = $1;`, [userID]
     );
+
+    if (rows.length === 0){
+      return response.status(404).json({ message: "User not found" });
+    }
+
+    response.status(200).json(rows[0]);
+  }catch(error){
+    response.status(500).json({error: error.message});
+  }
 };
 
-// Export the functions so they can be used in other files
+const getUserId = async (requst, response) => {
+  try{
+    const userEmail = requst.params.email;
+    const { rows } = await pool.query(
+      `SELECT id FROM users WHERE trim(email) = $1;`, [userEmail]
+    );
+
+    if (rows.length === 0){
+      return response.status(404).json({ message: "User not found" });
+    }
+
+    response.status(200).json(rows[0]);
+  }catch(error){
+    response.status(500).json({error: error.message});
+  }
+}
+
+// Export the function so it can be used in other files
 module.exports = {
     getUsers,
-    insertUser
+    getUserInfo,
+    getUserId
 };
