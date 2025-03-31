@@ -22,13 +22,16 @@ app.get('/', (request, response) => {
 })
 //Get
 app.get('/tournaments', dbTournament.getTournaments);
-// app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
+app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
 // Define routes, endpoints for functionality
 app.get('/users', dbUser.getUsers);
 app.get('/users/info/:id', dbUser.getUserInfo);
 app.get('/users/id/:email', dbUser.getUserId);
 
 //Post
+//Tournaments
+app.post('/tournaments', dbTournament.createTournament);
+//Users
 app.post('/users', dbUser.insertUser);
 app.post('/users/login', dbUser.loginUser);
 
