@@ -22,6 +22,7 @@ app.get('/', (request, response) => {
 })
 //Get
 app.get('/tournaments', dbTournament.getTournaments);
+// app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
 // Define routes, endpoints for functionality
 app.get('/users', dbUser.getUsers);
 app.get('/users/info/:id', dbUser.getUserInfo);
