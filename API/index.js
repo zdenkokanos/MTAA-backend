@@ -35,6 +35,11 @@ app.post('/tournaments', dbTournament.createTournament);
 app.post('/users', dbUser.insertUser);
 app.post('/users/login', dbUser.loginUser);
 
+// Put
+app.put('/users/changePassword', dbUser.changePassword)
+app.put('/users/editProfile', dbUser.editProfile)
+app.put('/users/editPreferences', dbUser.editPreferences)
+
 // Start the server and listen on specified port
 app.listen(port, () => {
   console.log(`App running on port ${port}.`)

@@ -210,3 +210,4 @@ If you've done everything correctly, you should see this after entering `http://
 ```
 # 10. THE END
 Now, write down every usecase for databse calls and code api call for each usecase. Test it in the postman.
+#### Protip: install `npm install -g nodemon` to autorefresh server and start server with `nodemon index.js` 

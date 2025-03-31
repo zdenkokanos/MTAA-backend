@@ -109,11 +109,66 @@ const loginUser = async (request, response) => {
   }
 };
 
+// change password
+const changePassword = async (request, response) => {
+  try {
+    const { id, newPassword } = request.body;
+
+    await pool.query(
+      `UPDATE users SET password = $1 WHERE id = $2;`,
+      [newPassword, id]
+    );
+
+    response.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+};
+
+// edit password
+const editProfile = async (request, response) => {
+  try {
+    const { id, first_name, last_name, age, gender } = request.body;
+
+    await pool.query(
+      `UPDATE users 
+       SET first_name = $1, last_name = $2, age = $3, gender = $4
+       WHERE id = $5`,
+      [first_name, last_name, age, gender, id]
+    );
+
+    response.status(200).json({ message: "Profile updated successfully" });
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+};
+
+// edit preferences
+const editPreferences = async (request, response) => {
+  try {
+    const { id, preferred_location, preferred_longitude, preferred_latitude } = request.body;
+
+    await pool.query(
+      `UPDATE users 
+       SET preferred_location = $1, preferred_longitude = $2, preferred_latitude = $3
+       WHERE id = $4`,
+      [preferred_location, preferred_longitude, preferred_latitude, id]
+    );
+
+    response.status(200).json({ message: "Profile updated successfully" });
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+};
+
 // Export the function so it can be used in other files
 module.exports = {
     getUsers,
     getUserInfo,
     getUserId,
     insertUser,
-    loginUser
+    loginUser,
+    changePassword,
+    editProfile,
+    editPreferences
 };
