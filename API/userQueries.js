@@ -143,6 +143,24 @@ const editProfile = async (request, response) => {
   }
 };
 
+// edit preferences
+const editPreferences = async (request, response) => {
+  try {
+    const { id, preferred_location, preferred_longitude, preferred_latitude } = request.body;
+
+    await pool.query(
+      `UPDATE users 
+       SET preferred_location = $1, preferred_longitude = $2, preferred_latitude = $3
+       WHERE id = $4`,
+      [preferred_location, preferred_longitude, preferred_latitude, id]
+    );
+
+    response.status(200).json({ message: "Profile updated successfully" });
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+};
+
 // Export the function so it can be used in other files
 module.exports = {
     getUsers,
@@ -151,5 +169,6 @@ module.exports = {
     insertUser,
     loginUser,
     changePassword,
-    editProfile
+    editProfile,
+    editPreferences
 };

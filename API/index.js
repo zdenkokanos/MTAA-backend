@@ -38,6 +38,7 @@ app.post('/users/login', dbUser.loginUser);
 // Put
 app.put('/users/changePassword', dbUser.changePassword)
 app.put('/users/editProfile', dbUser.editProfile)
+app.put('/users/editPreferences', dbUser.editPreferences)
 
 // Start the server and listen on specified port
 app.listen(port, () => {
