@@ -68,6 +68,8 @@ app.post('/users', dbUser.insertUser);
 app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably
 //Tournaments
 app.post('/tournaments', dbTournament.createTournament);
+app.post('/tournaments/leaderboard/add', dbTournament.addRecordToLeaderboard);
+
 
 //// ## PUTs ##
 // Users
@@ -76,6 +78,8 @@ app.put('/users/editProfile', dbUser.editProfile)
 app.put('/users/editPreferences', dbUser.editPreferences)
 // Tournaments
 app.put('/tournaments/edit', dbTournament.editTournament)
+app.put('/tournaments/start/:id', dbTournament.startTournament)
+app.put('/tournaments/stop/:id', dbTournament.stopTournament)
 
 // Start the server and listen on specified port
 app.listen(port, () => {

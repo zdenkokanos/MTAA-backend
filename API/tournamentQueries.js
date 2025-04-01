@@ -500,9 +500,136 @@ const editTournament = async (request, response) => {
     }
 }
 
+/**
+ * @swagger
+ * /tournaments/start/{id}:
+ *   put:
+ *     summary: Start a tournament
+ *     description: Updates the status of a tournament to "Ongoing" based on the tournament ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the tournament to start
+ *         schema:
+ *           type: integer
+ *           example: 2
+ *     responses:
+ *       200:
+ *         description: Tournament started successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tournament started successfully
+ *       400:
+ *         description: Bad request, missing or invalid tournament ID.
+ *       404:
+ *         description: Tournament not found.
+ *       500:
+ *         description: Internal server error.
+ */
+const startTournament = async (request, response) => {
+    const tournament_id = request.params.id;
+
+    try {
+        const result = await pool.query(
+            `UPDATE tournaments
+             SET status = 'Ongoing'
+             WHERE id = $1`,
+            [tournament_id]
+        );
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({ message: "Tournament not found" });
+        }
+
+        response.status(200).json({ message: "Tournament started successfully" });
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * @swagger
+ * /tournaments/start/{id}:
+ *   put:
+ *     summary: Stop a tournament
+ *     description: Updates the status of a tournament to "Closed" based on the tournament ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the tournament to stop
+ *         schema:
+ *           type: integer
+ *           example: 2
+ *     responses:
+ *       200:
+ *         description: Tournament stopped successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tournament stopped successfully
+ *       400:
+ *         description: Bad request, missing or invalid tournament ID.
+ *       404:
+ *         description: Tournament not found.
+ *       500:
+ *         description: Internal server error.
+ */
+const stopTournament = async (request, response) => {
+    const tournament_id = request.params.id;
+
+    try {
+        const result = await pool.query(
+            `UPDATE tournaments
+             SET status = 'Closed'
+             WHERE id = $1`,
+            [tournament_id]
+        );
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({ message: "Tournament not found" });
+        }
+
+        response.status(200).json({ message: "Tournament stopped successfully" });
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+};
+
+const addRecordToLeaderboard = async (request, response) => {
+    const { tournament_id, team_id, position} = request.body;
+
+    try {
+        await pool.query(
+            `INSERT INTO
+                leaderboard (tournament_id, team_id, position) 
+            VALUES
+                ($1, $2, $3)
+            `, [tournament_id, team_id, position]
+        );
+
+        response.status(200).json({ message: "Record added to leaderboard" })
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
     createTournament,
-    editTournament
+    editTournament,
+    startTournament,
+    stopTournament,
+    addRecordToLeaderboard
 };

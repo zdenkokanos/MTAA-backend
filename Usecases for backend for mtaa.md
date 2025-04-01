@@ -1,14 +1,16 @@
 # Usecases for backend for mtaa
+T:Z
+9:5 from 33
 
 # 1. User operations
-✔ get all users ✔
-✔ get information about user () -> (first_name, last_name, email, age, gender, prefSports, city(longtitude/latitude)) ✔
-✔ get user ID based on email (email) -> id ✔
-✔ user registration (first_name, last_name, email, password, age, gender, prefSports, city(longtitude/latitude)) -> successfull registration ✔
-✔ user login (email, password) -> successfull login ✔
-✔ change password (email, password) -> new password ✔
-✔ edit profile (new first_name, new_lastname, new_email, age, gender) -> //v profile edit-profile //// Frontend pošle JSON so vsetkymi hodnotami na ktore sa ma zmenit - nemalo by byt tazke v reactNative, lebo si zoberies get/users/info/id a zmenis co treba ✔
-✔ edit preferences (new prefSport, new city) ✔
+✔T get all users ✔
+✔T get information about user () -> (first_name, last_name, email, age, gender, prefSports, city(longtitude/latitude)) ✔
+✔T get user ID based on email (email) -> id ✔
+✔Z user registration (first_name, last_name, email, password, age, gender, prefSports, city(longtitude/latitude)) -> successfull registration ✔
+✔Z user login (email, password) -> successfull login ✔
+✔T change password (email, password) -> new password ✔
+✔T edit profile (new first_name, new_lastname, new_email, age, gender) -> //v profile edit-profile //// Frontend pošle JSON so vsetkymi hodnotami na ktore sa ma zmenit - nemalo by byt tazke v reactNative, lebo si zoberies get/users/info/id a zmenis co treba ✔
+✔T edit preferences (new prefSport, new city) ✔
 
 # 2. Tickets
 - generate ticket (userid, tournamentid) -> hash // generate randomly
@@ -17,13 +19,14 @@
 - validateTicket (hash) -> validate(yes/no) // hash received from frontend from qr code
 
 # 3. Tournaments 
-✔ list tournaments (category) -> {tournaments} ✔
-✔ getInfo (toruanmentID) -> tournament info ✔
-✔ createTournament(name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) ✔
-✔ editTournament parameters (user_id, NEW: name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) -> ✔
-- startTournament (userID, tournamenID) -> change 'ongoling' state
-- stopTournament (userID, tournamenID) -> change 'ongoling' state
+✔Z list tournaments (category) -> {tournaments} ✔
+✔Z createTournament(name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) ✔
+✔Z getInfo (toruanmentID) -> tournament info ✔
+✔T editTournament parameters (user_id, NEW: name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) -> ✔
+✔T startTournament (userID, tournamenID) -> change 'ongoling' state ✔
+✔T stopTournament (userID, tournamenID) -> change 'ongoling' state ✔
 - editLeaderboard (teamID, position) ->
+- getLeaderboardByTournament (tournament_id) -> 
 - shareTournament (tournamentID) -> link?
 
 # 4. Tournament Participants
