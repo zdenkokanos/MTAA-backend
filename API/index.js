@@ -6,6 +6,7 @@ const port = 3000
 // Import other modules
 const dbUser = require('./userQueries')
 const dbTournament = require('./tournamentQueries')
+const dbCategories = require('./sportCategoryQueries')
 const dbTicket = require('./ticketQueries')
 
 // Middleware that parses incoming requests with JSON payloads
@@ -41,7 +42,9 @@ app.put('/users/editProfile', dbUser.editProfile)
 app.put('/users/editPreferences', dbUser.editPreferences)
 app.put('/tournaments/edit', dbTournament.editTournament)
 
+app.get('/categories/:sportName', dbCategories.getCategoriesId)
+
 // Start the server and listen on specified port
 app.listen(port, () => {
-  console.log(`App running on port ${port}.`)
+  console.log(`App running on port ${port}. Have fun.`)
 })

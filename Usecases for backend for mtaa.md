@@ -22,8 +22,7 @@
 ✔ list tournaments (category) -> {tournaments} ✔
 ✔ getInfo (toruanmentID) -> tournament info ✔
 ✔ createTournament(name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) ✔
-- editTournament parameters (user_id, NEW: name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) ->
-- tournamentDeletion (userID, tournamentID) ->
+✔ editTournament parameters (user_id, NEW: name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) -> ✔
 - startTournament (userID, tournamenID) -> change 'ongoling' state
 - stopTournament (userID, tournamenID) -> change 'ongoling' state
 - editLeaderboard (teamID, position) ->
@@ -47,6 +46,7 @@
 - getNotifications (userID) -> {notifications}
 - markNotificationAsRead (userID, notificationID) ->
 
-# 7. challanges
+# 7. challanges and considerations
 - reset password 
 - premenit age na birthyear
+- tournamentDeletion (userID, tournamentID) ->

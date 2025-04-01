@@ -1,4 +1,3 @@
-// queries.js
 const pool = require('./pooling'); // Import the database pool
 
 // List Tournaments
@@ -66,6 +65,7 @@ const getTournamentInfo = async (request, response) => {
     }
 }
 
+// create tournament
 const createTournament = async (request, response) => {
     const { owner_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status, date } = request.body;
 
@@ -101,6 +101,7 @@ const createTournament = async (request, response) => {
     }
 }
 
+// edit tournament
 const editTournament = async (request, response) => {
     const { tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status } = request.body;
 
