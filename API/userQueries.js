@@ -521,6 +521,79 @@ const editPreferences = async (request, response) => {
   }
 };
 
+/**
+ * @swagger
+ * /users/tournaments/{id}:
+ *   get:
+ *     summary: Get all tournaments a user is registered for
+ *     description: Retrieves all tournaments where a specific user is registered.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the user whose tournaments you want to retrieve
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the tournaments the user is registered for
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: The ID of the tournament
+ *                   tournament_name:
+ *                     type: string
+ *                     description: The name of the tournament
+ *                   category_id:
+ *                     type: integer
+ *                     description: The ID of the sport category
+ *                   location_name:
+ *                     type: string
+ *                     description: The name of the tournament location
+ *                   latitude:
+ *                     type: number
+ *                     format: float
+ *                     description: The latitude of the tournament location
+ *                   longitude:
+ *                     type: number
+ *                     format: float
+ *                     description: The longitude of the tournament location
+ *                   level:
+ *                     type: string
+ *                     description: The level of the tournament (e.g., "Amateur", "Professional")
+ *                   max_team_size:
+ *                     type: integer
+ *                     description: The maximum size of a team
+ *                   game_setting:
+ *                     type: string
+ *                     description: The setting of the game (e.g., "Indoor", "Outdoor")
+ *                   entry_fee:
+ *                     type: number
+ *                     format: float
+ *                     description: The entry fee for the tournament
+ *                   prize_description:
+ *                     type: string
+ *                     description: The prize for the tournament
+ *                   is_public:
+ *                     type: boolean
+ *                     description: Whether the tournament is public or not
+ *                   additional_info:
+ *                     type: string
+ *                     description: Additional information about the tournament
+ *                   status:
+ *                     type: string
+ *                     description: The status of the tournament (e.g., "Upcoming", "Ongoing", "Closed")
+ *       404:
+ *         description: No tournaments found for the user
+ *       500:
+ *         description: Internal server error
+ */
 const getUsersTournaments = async (request, response) =>{
   const user_id = request.params.id;
 

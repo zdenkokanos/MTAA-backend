@@ -1,6 +1,6 @@
 # Usecases for backend for mtaa
 T:Z
-12:5 from 32
+13:5 from 32
 
 # 1. User operations
 ✔T get all users ✔
@@ -16,7 +16,7 @@ T:Z
 # 2. Tickets
 - generate ticket (userid, tournamentid) -> hash // generate randomly
 - getTicketID () -> hash
-- get allTickets (userID) -> {tickets}
+✔T get allTickets (userID) -> {tickets} ✔
 - validateTicket (hash) -> validate(yes/no) // hash received from frontend from qr code
 
 # 3. Tournaments 

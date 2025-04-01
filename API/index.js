@@ -63,6 +63,9 @@ app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
 app.get('/tournaments/leaderboard/info/:id', dbTournament.getLeaderboardByTournament);
 // Sport categories
 app.get('/categories/:sportName', dbCategories.getCategoriesId)
+// Tickets
+app.get('/tickets/byuser/:id', dbTicket.getUserTickets)
+
 
 //// ## POSTs ##
 // Users
