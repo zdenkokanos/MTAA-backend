@@ -521,6 +521,27 @@ const editPreferences = async (request, response) => {
   }
 };
 
+const getUsersTournaments = async (request, response) =>{
+  const user_id = request.params.id;
+
+  try {
+      const result = await pool.query(
+          `SELECT t.*
+          FROM tournaments t
+          JOIN tickets ti ON t.id = ti.tournament_id
+          WHERE ti.user_id = $1;
+          `,[user_id]
+      );
+      
+      if (result.rowCount === 0){
+          return response.status(404).json({ message: "Tournament not found" });
+      }
+      response.status(200).json( result.rows )
+  } catch (error) {
+      response.status(500).json({ erro: error.message })
+  }
+}
+
 module.exports = {
     getUsers,
     getUserInfo,
@@ -529,5 +550,6 @@ module.exports = {
     loginUser,
     changePassword,
     editProfile,
-    editPreferences
+    editPreferences,
+    getUsersTournaments
 };

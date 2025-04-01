@@ -606,6 +606,51 @@ const stopTournament = async (request, response) => {
     }
 };
 
+/**
+ * @swagger
+ * /leaderboard:
+ *   post:
+ *     summary: Add a new record to the leaderboard
+ *     description: Adds a new team record to the leaderboard for a specific tournament and position.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tournament_id
+ *               - team_id
+ *               - position
+ *             properties:
+ *               tournament_id:
+ *                 type: integer
+ *                 description: The ID of the tournament.
+ *                 example: 1
+ *               team_id:
+ *                 type: integer
+ *                 description: The ID of the team.
+ *                 example: 3
+ *               position:
+ *                 type: integer
+ *                 description: The position of the team in the tournament.
+ *                 example: 2
+ *     responses:
+ *       200:
+ *         description: Record added to the leaderboard.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Record added to leaderboard
+ *       400:
+ *         description: Invalid input, missing required fields or invalid data.
+ *       500:
+ *         description: Internal server error, failed to add record.
+ */
 const addRecordToLeaderboard = async (request, response) => {
     const { tournament_id, team_id, position} = request.body;
 
@@ -624,6 +669,66 @@ const addRecordToLeaderboard = async (request, response) => {
     }
 }
 
+/**
+ * @swagger
+ * /leaderboard/tournament/{id}:
+ *   get:
+ *     summary: Get leaderboard for a specific tournament
+ *     description: Retrieves all leaderboard records for a given tournament by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the tournament whose leaderboard records are to be fetched.
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved leaderboard records for the tournament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   tournament_id:
+ *                     type: integer
+ *                     description: ID of the tournament
+ *                   team_id:
+ *                     type: integer
+ *                     description: ID of the team
+ *                   position:
+ *                     type: integer
+ *                     description: Position of the team in the leaderboard
+ *       404:
+ *         description: Tournament not found
+ *       500:
+ *         description: Internal server error
+ */
+const getLeaderboardByTournament = async (request, response) =>{
+    const tournament_id = request.params.id;
+
+    try {
+        const result = await pool.query(
+            `SELECT
+                *
+            FROM
+                leaderboard
+            WHERE
+                tournament_id = $1
+            `,[tournament_id]
+        );
+        
+        if (result.rowCount === 0){
+            return response.status(404).json({ message: "Tournament not found" });
+        }
+        response.status(200).json( result.rows )
+    } catch (error) {
+        response.status(500).json({ erro: error.message })
+    }
+}
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
@@ -631,5 +736,6 @@ module.exports = {
     editTournament,
     startTournament,
     stopTournament,
-    addRecordToLeaderboard
+    addRecordToLeaderboard,
+    getLeaderboardByTournament
 };

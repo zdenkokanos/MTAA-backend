@@ -1,6 +1,6 @@
 # Usecases for backend for mtaa
 T:Z
-9:5 from 33
+12:5 from 32
 
 # 1. User operations
 ✔T get all users ✔
@@ -11,6 +11,7 @@ T:Z
 ✔T change password (email, password) -> new password ✔
 ✔T edit profile (new first_name, new_lastname, new_email, age, gender) -> //v profile edit-profile //// Frontend pošle JSON so vsetkymi hodnotami na ktore sa ma zmenit - nemalo by byt tazke v reactNative, lebo si zoberies get/users/info/id a zmenis co treba ✔
 ✔T edit preferences (new prefSport, new city) ✔
+✔T getUsersTournament (userId) -> ✔
 
 # 2. Tickets
 - generate ticket (userid, tournamentid) -> hash // generate randomly
@@ -25,9 +26,9 @@ T:Z
 ✔T editTournament parameters (user_id, NEW: name, sport, level, place, date&time, teamsize, setting, entryFee, prizeDescription, mode, additionalInfo) -> ✔
 ✔T startTournament (userID, tournamenID) -> change 'ongoling' state ✔
 ✔T stopTournament (userID, tournamenID) -> change 'ongoling' state ✔
-- editLeaderboard (teamID, position) ->
-- getLeaderboardByTournament (tournament_id) -> 
-- shareTournament (tournamentID) -> link?
+✔T editLeaderboard (teamID, position) -> ✔
+✔T getLeaderboardByTournament (tournament_id) -> ✔
+
 
 # 4. Tournament Participants
 - registerTeam(teamname) -> id?
@@ -40,7 +41,6 @@ T:Z
 
 # 5. Matches
 - getUserPosition (userID, tournamentID) -> users position in leaderboard
-- getTournaments (userID)
 
 # 6. Notifications
 - createNotification (userID, text) ->
@@ -52,3 +52,4 @@ T:Z
 - premenit age na birthyear
 - tournamentDeletion (userID, tournamentID) ->
 - deletion () -> delete user
+- shareTournament (tournamentID) -> link?

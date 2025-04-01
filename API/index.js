@@ -56,9 +56,11 @@ app.get('/', (request, response) => {
 app.get('/users', dbUser.getUsers);
 app.get('/users/info/:id', dbUser.getUserInfo);
 app.get('/users/id/:email', dbUser.getUserId);
+app.get('/users/tournaments/:id', dbUser.getUsersTournaments);
 // Tournaments
 app.get('/tournaments', dbTournament.getTournaments);
 app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
+app.get('/tournaments/leaderboard/info/:id', dbTournament.getLeaderboardByTournament);
 // Sport categories
 app.get('/categories/:sportName', dbCategories.getCategoriesId)
 
