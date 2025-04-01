@@ -2,7 +2,7 @@
 const pool = require('./pooling'); // Import the database pool
 
 // List Tournaments
-const getTournaments = async (request, response) => {
+const getTournaments = async (request, response) => { // ? notation (http://localhost:3000/tournaments?sport_category=Basketball)
     try {
         const sportCategory = request.query.sport_category;
         const { rows } = await pool.query(
@@ -101,8 +101,40 @@ const createTournament = async (request, response) => {
     }
 }
 
+const editTournament = async (request, response) => {
+    const { tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status } = request.body;
+
+    try {
+        await pool.query(
+        `UPDATE tournaments 
+        SET
+            tournament_name = $2,
+            category_id = $3,
+            location_name = $4,
+            latitude = $5,
+            longitude = $6,
+            level = $7,
+            max_team_size = $8,
+            game_setting = $9,
+            entry_fee = $10,
+            prize_description = $11,
+            is_public = $12,
+            additional_info = $13,
+            status = $14
+        WHERE id = $1
+            `, [tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status]
+        );
+        
+        response.status(200).json({ message: "Tournament updated successfully" });
+        
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
-    createTournament
+    createTournament,
+    editTournament
 };
