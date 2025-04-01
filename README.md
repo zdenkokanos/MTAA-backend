@@ -208,6 +208,75 @@ If you've done everything correctly, you should see this after entering `http://
     }
 ]
 ```
-# 10. THE END
+
+# 10. Protips
+## Nodemon
+install `npm install -g nodemon` to autorefresh server and start server with `nodemon index.js` 
+
+## Swagger
+Swagger is a documentation making tool, if you want to use that, here is how it works:
+
+- install swagger with `npm install swagger-jsdoc swagger-ui-express`
+- import this in your `index.js` file
+```javascript
+// Import Swagger and setup
+const swaggerUi = require('swagger-ui-express');
+const swaggerJSDoc = require('swagger-jsdoc');
+```
+- add this code in `index.js` to activate swagger
+```javascript
+// Swagger definition
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Tournament API',
+      version: '1.0.0',
+      description: 'API for managing tournaments and users',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000', // Localhost, or URL for production
+      },
+    ],
+  },
+  apis: ['*.js'], // this gets the swagger comments from all files ending with .js, if you do not wish that, place there only file names you want
+};
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+// Serve Swagger docs
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+```
+- With this notation you can build swagger documentation (place it near your function); here is the boilerplate:
+```
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: 
+ *     description: 
+ *     responses:
+ *       200:
+ *         description: 
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: 
+ *                     example: 
+ *                   first_name:
+ *                     type: 
+ *                     example: 
+ *       500:
+ *         description: Internal server error
+ */
+```
+
+- to see the documentation, go to your browser and enter `http://localhost:3000/api-docs` 
+
+
+# 11. THE END
 Now, write down every usecase for databse calls and code api call for each usecase. Test it in the postman.
-#### Protip: install `npm install -g nodemon` to autorefresh server and start server with `nodemon index.js` 

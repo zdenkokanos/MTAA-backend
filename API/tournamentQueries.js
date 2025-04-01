@@ -1,7 +1,98 @@
 const pool = require('./pooling'); // Import the database pool
 
-// List Tournaments
-const getTournaments = async (request, response) => { // ? notation (http://localhost:3000/tournaments?sport_category=Basketball)
+/**
+ * @swagger
+ * /tournaments:
+ *   get:
+ *     summary: Get all tournaments with sport category filter
+ *     description: Returns a list of tournaments, filtered by sport category.
+ *     parameters:
+ *       - in: query
+ *         name: sport_category
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: The name of the sport category to filter tournaments.
+ *         example: Basketball
+ *     responses:
+ *       200:
+ *         description: List of tournaments retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   tournament_id:
+ *                     type: integer
+ *                     example: 1
+ *                   owner_id:
+ *                     type: integer
+ *                     example: 5
+ *                   tournament_name:
+ *                     type: string
+ *                     example: Summer Basketball Championship
+ *                   category_id:
+ *                     type: integer
+ *                     example: 2
+ *                   location_name:
+ *                     type: string
+ *                     example: Los Angeles Sports Arena
+ *                   latitude:
+ *                     type: number
+ *                     format: float
+ *                     example: 34.0522
+ *                   longitude:
+ *                     type: number
+ *                     format: float
+ *                     example: -118.2437
+ *                   level:
+ *                     type: string
+ *                     example: Amateur
+ *                   max_team_size:
+ *                     type: integer
+ *                     example: 5
+ *                   game_setting:
+ *                     type: string
+ *                     example: Outdoor
+ *                   entry_fee:
+ *                     type: number
+ *                     format: float
+ *                     example: 20.00
+ *                   prize_description:
+ *                     type: string
+ *                     example: Trophy and cash prize
+ *                   is_public:
+ *                     type: boolean
+ *                     example: true
+ *                   additional_info:
+ *                     type: string
+ *                     example: Bring your own jerseys
+ *                   status:
+ *                     type: string
+ *                     example: Upcoming
+ *                   date:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2025-07-10T10:00:00Z"
+ *                   category_name:
+ *                     type: string
+ *                     example: Basketball
+ *       404:
+ *         description: No tournaments found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tournaments are empty
+ *       500:
+ *         description: Internal server error.
+ */
+const getTournaments = async (request, response) => { 
     try {
         const sportCategory = request.query.sport_category;
         const { rows } = await pool.query(
@@ -41,7 +132,96 @@ const getTournaments = async (request, response) => { // ? notation (http://loca
     }
 };
 
-// Get Info by tournament ID
+/**
+ * @swagger
+ * /tournaments/{id}:
+ *   get:
+ *     summary: Get tournament info by ID
+ *     description: Returns detailed information about a specific tournament based on its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The unique ID of the tournament.
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Tournament details retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 owner_id:
+ *                   type: integer
+ *                   example: 5
+ *                 tournament_name:
+ *                   type: string
+ *                   example: Summer Basketball Championship
+ *                 category_id:
+ *                   type: integer
+ *                   example: 2
+ *                 location_name:
+ *                   type: string
+ *                   example: Los Angeles Sports Arena
+ *                 latitude:
+ *                   type: number
+ *                   format: float
+ *                   example: 34.0522
+ *                 longitude:
+ *                   type: number
+ *                   format: float
+ *                   example: -118.2437
+ *                 level:
+ *                   type: string
+ *                   example: Amateur
+ *                 max_team_size:
+ *                   type: integer
+ *                   example: 5
+ *                 game_setting:
+ *                   type: string
+ *                   example: Outdoor
+ *                 entry_fee:
+ *                   type: number
+ *                   format: float
+ *                   example: 20.00
+ *                 prize_description:
+ *                   type: string
+ *                   example: Trophy and cash prize
+ *                 is_public:
+ *                   type: boolean
+ *                   example: true
+ *                 additional_info:
+ *                   type: string
+ *                   example: Bring your own jerseys
+ *                 status:
+ *                   type: string
+ *                   example: Upcoming
+ *                 date:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2025-07-10T10:00:00Z"
+ *                 category_name:
+ *                   type: string
+ *                   example: Basketball
+ *       404:
+ *         description: Tournament not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tournament not found
+ *       500:
+ *         description: Internal server error.
+ */
 const getTournamentInfo = async (request, response) => {
     try {
         const tournamentID = request.params.id;
@@ -65,7 +245,102 @@ const getTournamentInfo = async (request, response) => {
     }
 }
 
-// create tournament
+/**
+ * @swagger
+ * /tournaments:
+ *   post:
+ *     summary: Create a new tournament
+ *     description: Adds a new tournament to the database and returns its ID.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - owner_id
+ *               - tournament_name
+ *               - category_id
+ *               - location_name
+ *               - latitude
+ *               - longitude
+ *               - level
+ *               - max_team_size
+ *               - game_setting
+ *               - entry_fee
+ *               - prize_description
+ *               - is_public
+ *               - additional_info
+ *               - status
+ *               - date
+ *             properties:
+ *               owner_id:
+ *                 type: integer
+ *                 description: ID of the tournament owner.
+ *                 example: 5
+ *               tournament_name:
+ *                 type: string
+ *                 example: Summer Basketball Championship
+ *               category_id:
+ *                 type: integer
+ *                 description: ID of the sport category.
+ *                 example: 2
+ *               location_name:
+ *                 type: string
+ *                 example: Los Angeles Sports Arena
+ *               latitude:
+ *                 type: number
+ *                 format: float
+ *                 example: 34.0522
+ *               longitude:
+ *                 type: number
+ *                 format: float
+ *                 example: -118.2437
+ *               level:
+ *                 type: string
+ *                 example: Amateur
+ *               max_team_size:
+ *                 type: integer
+ *                 example: 5
+ *               game_setting:
+ *                 type: string
+ *                 example: Outdoor
+ *               entry_fee:
+ *                 type: number
+ *                 format: float
+ *                 example: 20.00
+ *               prize_description:
+ *                 type: string
+ *                 example: Trophy and cash prize
+ *               is_public:
+ *                 type: boolean
+ *                 example: true
+ *               additional_info:
+ *                 type: string
+ *                 example: Bring your own jerseys
+ *               status:
+ *                 type: string
+ *                 example: Upcoming
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-07-10T10:00:00Z"
+ *     responses:
+ *       201:
+ *         description: Tournament created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *       400:
+ *         description: Bad request, missing required fields.
+ *       500:
+ *         description: Internal server error.
+ */
 const createTournament = async (request, response) => {
     const { owner_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status, date } = request.body;
 
@@ -101,7 +376,99 @@ const createTournament = async (request, response) => {
     }
 }
 
-// edit tournament
+/**
+ * @swagger
+ * /tournaments:
+ *   put:
+ *     summary: Edit an existing tournament
+ *     description: Updates the information of an existing tournament.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tournament_id
+ *               - tournament_name
+ *               - category_id
+ *               - location_name
+ *               - latitude
+ *               - longitude
+ *               - level
+ *               - max_team_size
+ *               - game_setting
+ *               - entry_fee
+ *               - prize_description
+ *               - is_public
+ *               - additional_info
+ *               - status
+ *             properties:
+ *               tournament_id:
+ *                 type: integer
+ *                 description: ID of the tournament to be updated.
+ *                 example: 1
+ *               tournament_name:
+ *                 type: string
+ *                 example: Summer Basketball Championship
+ *               category_id:
+ *                 type: integer
+ *                 description: ID of the sport category.
+ *                 example: 2
+ *               location_name:
+ *                 type: string
+ *                 example: Los Angeles Sports Arena
+ *               latitude:
+ *                 type: number
+ *                 format: float
+ *                 example: 34.0522
+ *               longitude:
+ *                 type: number
+ *                 format: float
+ *                 example: -118.2437
+ *               level:
+ *                 type: string
+ *                 example: Amateur
+ *               max_team_size:
+ *                 type: integer
+ *                 example: 5
+ *               game_setting:
+ *                 type: string
+ *                 example: Outdoor
+ *               entry_fee:
+ *                 type: number
+ *                 format: float
+ *                 example: 20.00
+ *               prize_description:
+ *                 type: string
+ *                 example: Trophy and cash prize
+ *               is_public:
+ *                 type: boolean
+ *                 example: true
+ *               additional_info:
+ *                 type: string
+ *                 example: Bring your own jerseys
+ *               status:
+ *                 type: string
+ *                 example: Upcoming
+ *     responses:
+ *       200:
+ *         description: Tournament updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tournament updated successfully
+ *       400:
+ *         description: Bad request, missing required fields.
+ *       404:
+ *         description: Tournament not found.
+ *       500:
+ *         description: Internal server error.
+ */
 const editTournament = async (request, response) => {
     const { tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status } = request.body;
 

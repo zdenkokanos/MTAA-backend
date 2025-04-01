@@ -4,13 +4,11 @@
 ✔ get all users ✔
 ✔ get information about user () -> (first_name, last_name, email, age, gender, prefSports, city(longtitude/latitude)) ✔
 ✔ get user ID based on email (email) -> id ✔
-
 ✔ user registration (first_name, last_name, email, password, age, gender, prefSports, city(longtitude/latitude)) -> successfull registration ✔
 ✔ user login (email, password) -> successfull login ✔
 ✔ change password (email, password) -> new password ✔
 ✔ edit profile (new first_name, new_lastname, new_email, age, gender) -> //v profile edit-profile //// Frontend pošle JSON so vsetkymi hodnotami na ktore sa ma zmenit - nemalo by byt tazke v reactNative, lebo si zoberies get/users/info/id a zmenis co treba ✔
 ✔ edit preferences (new prefSport, new city) ✔
-<!-- - deletion () -> delete user -->
 
 # 2. Tickets
 - generate ticket (userid, tournamentid) -> hash // generate randomly
@@ -50,3 +48,4 @@
 - reset password 
 - premenit age na birthyear
 - tournamentDeletion (userID, tournamentID) ->
+- deletion () -> delete user
