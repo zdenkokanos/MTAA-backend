@@ -128,8 +128,6 @@ const getUserInfo = async (request, response) => {
         id,
         first_name,
         last_name,
-        gender,
-        age,
         email,
         preferred_longitude,
         preferred_latitude,
@@ -266,6 +264,13 @@ const getUserId = async (request, response) => {
  *                 type: number
  *                 format: float
  *                 example: 34.0522
+ *               preferences:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   example: 1
+ *                 description: List of sport IDs the user prefers
+ *                 example: [1, 2, 3]
  *     responses:
  *       201:
  *         description: User successfully created.
@@ -284,15 +289,13 @@ const getUserId = async (request, response) => {
  */
 const insertUser = async (request, response) => {
   try {
-    const { first_name, last_name, gender, age, email, password, preferred_location, preferred_longitude, preferred_latitude } = request.body;
+    const { first_name, last_name, email, password, preferred_location, preferred_longitude, preferred_latitude, preferences } = request.body;
 
     const { rows } = await pool.query(
       `INSERT INTO
         users (
           first_name,
           last_name,
-          gender,
-          age,
           email,
           password,
           preferred_location,
@@ -300,13 +303,26 @@ const insertUser = async (request, response) => {
           preferred_latitude
         )
       VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ($1, $2, $3, $4, $5, $6, $7)
       RETURNING
         id;`,
-      [first_name, last_name, gender, age, email, password, preferred_location, preferred_longitude, preferred_latitude]
+      [first_name, last_name, email, password, preferred_location, preferred_longitude, preferred_latitude]
     );
 
-    response.status(201).json({ id: rows[0].id }); // Return the inserted user ID
+    const userId = rows[0].id;
+    
+    if (Array.isArray(preferences) && preferences.length > 0) {
+      const preferenceQueries = preferences.map(sportId => {  // map loops over each item in array
+        return pool.query(
+          `INSERT INTO preferences (user_id, sport_id) VALUES ($1, $2);`,
+          [userId, sportId]
+        );
+      });
+
+      await Promise.all(preferenceQueries);
+    }
+
+    response.status(201).json({ id: userId }); // Return the inserted user ID
   } catch (error) {
     response.status(500).json({ error: error.message });
   }

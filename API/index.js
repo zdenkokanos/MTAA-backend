@@ -70,7 +70,7 @@ app.get('/tickets/byuser/:id', dbTicket.getUserTickets)
 //// ## POSTs ##
 // Users
 app.post('/users', dbUser.insertUser);
-app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably
+app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably // zmenit na REST
 //Tournaments
 app.post('/tournaments', dbTournament.createTournament);
 app.post('/tournaments/leaderboard/add', dbTournament.addRecordToLeaderboard);
