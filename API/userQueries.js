@@ -200,126 +200,6 @@ const getUserId = async (request, response) => {
   }
 }
 
-/**
- * @swagger
- * /users:
- *   post:
- *     summary: Insert a new user into the database
- *     description: Adds a new user and returns their unique ID.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - first_name
- *               - last_name
- *               - gender
- *               - age
- *               - email
- *               - password
- *               - preferred_location
- *               - preferred_longitude
- *               - preferred_latitude
- *             properties:
- *               first_name:
- *                 type: string
- *                 example: Jane
- *               last_name:
- *                 type: string
- *                 example: Smith
- *               gender:
- *                 type: string
- *                 example: Female
- *               age:
- *                 type: integer
- *                 example: 28
- *               email:
- *                 type: string
- *                 example: jane.smith@email.com
- *               password:
- *                 type: string
- *                 description: Hashed user password
- *                 example: hashed_password2
- *               preferred_location:
- *                 type: string
- *                 example: Los Angeles
- *               preferred_longitude:
- *                 type: number
- *                 format: float
- *                 example: -118.2437
- *               preferred_latitude:
- *                 type: number
- *                 format: float
- *                 example: 34.0522
- *               preferences:
- *                 type: array
- *                 items:
- *                   type: integer
- *                   example: 1
- *                 description: List of sport IDs the user prefers
- *                 example: [1, 2, 3]
- *     responses:
- *       201:
- *         description: User successfully created.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   example: 2
- *       400:
- *         description: Bad request, missing required fields.
- *       500:
- *         description: Internal server error.
- */
-const insertUser = async (request, response) => {
-  try {
-    const { first_name, last_name, email, password, preferred_location, preferred_longitude, preferred_latitude, preferences, image_path } = request.body;
-
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, saltRounds); 
-
-    const { rows } = await pool.query(
-      `INSERT INTO
-        users (
-          first_name,
-          last_name,
-          email,
-          password,
-          preferred_location,
-          preferred_longitude,
-          preferred_latitude,
-          image_path
-        )
-      VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING
-        id;`,
-      [first_name, last_name, email, hashedPassword, preferred_location, preferred_longitude, preferred_latitude, image_path]
-    );
-
-    const userId = rows[0].id;
-    
-    if (Array.isArray(preferences) && preferences.length > 0) {
-      const preferenceQueries = preferences.map(sportId => {  // map loops over each item in array
-        return pool.query(
-          `INSERT INTO preferences (user_id, sport_id) VALUES ($1, $2);`,
-          [userId, sportId]
-        );
-      });
-
-      await Promise.all(preferenceQueries);
-    }
-
-    response.status(201).json({ id: userId }); // Return the inserted user ID
-  } catch (error) {
-    response.status(500).json({ error: error.message });
-  }
-};
 
 // POST user login creditials and receive their id as sign of successfull login; WILL BE CHANGEG - TOKENIZATION
 const loginUser = async (request, response) => {
@@ -1035,7 +915,6 @@ module.exports = {
     getUsers,
     getUserInfo,
     getUserId,
-    insertUser,
     loginUser,
     changePassword,
     editProfile,

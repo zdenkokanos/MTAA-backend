@@ -71,8 +71,8 @@ app.get('/tournaments/:id/teams/count', dbTournament.getTeamCount);
 
 //// ## POSTs ##
 // Users
-app.post('/users', dbUser.insertUser);
-app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably // zmenit na REST
+app.post('/auth/register', dbAuth.insertUser);
+app.post('/auth/login', dbAuth.login); 
 //Tournaments
 app.post('/tournaments', dbTournament.createTournament);
 app.post('/tournaments/:id/register', dbTournament.addTeamToTournament);
