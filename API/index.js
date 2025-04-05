@@ -59,14 +59,14 @@ app.get('/users/:id/tournaments/history', dbUser.getUsersTournamentsHistory);
 app.get('/users/:id/tournaments/owned', dbUser.getUsersOwnedTournaments);
 app.get('/users/:id/top-picks', dbUser.getTopPicks);
 app.get('/users/:id/tickets', dbUser.getUserTickets);
+app.get('/users/:id/tickets/:ticket_id/qr', dbUser.getTicketQR);
 // Tournaments
 app.get('/tournaments', dbTournament.getTournaments);
 app.get('/tournaments/:id/info', dbTournament.getTournamentInfo);
 app.get('/tournaments/:id/leaderboard', dbTournament.getLeaderboardByTournament);
 app.get('/tournaments/:id/enrolled', dbTournament.getEnrolledTeams);
-// Sport categories
-app.get('/categories/:sportName', dbCategories.getCategoriesId);  // TODO: neviem ci treba
-app.get('/categories', dbCategories.getAllCategories); // TODO: dal by som tournaments/categories
+app.get('/tournaments/categories', dbCategories.getAllCategories);
+app.get('/tournaments/:id/teams/count', dbTournament.getTeamCount);
 // Tickets
 
 //// ## POSTs ##
@@ -89,6 +89,9 @@ app.put('/users/editPreferences', dbUser.editPreferences);
 app.put('/tournaments/edit', dbTournament.editTournament);
 app.put('/tournaments/:id/start', dbTournament.startTournament);
 app.put('/tournaments/:id/stop', dbTournament.stopTournament);
+
+//// ## DELETEs ##
+app.delete('/tournaments/leaderboard/remove', dbTournament.removeFromLeaderboard);
 
 // Start the server and listen on specified port
 app.listen(port, () => {

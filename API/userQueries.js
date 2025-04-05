@@ -613,7 +613,7 @@ const getUsersTournaments = async (request, response) =>{
   try {
       const result = await pool.query(
           `SELECT
-            t.id,
+            tm.id,
             t.tournament_name,
             t.date,
             t.latitude,
@@ -959,30 +959,78 @@ const getUserTickets = async (request, response) =>{
   }
 }  
 
-// const getUserQR = async (request, response) => {
-//   const user_id = request.params.id;
-//   const tournament_id = request.params.tournament_id;
 
-//   try {
-//     const result = await pool.query(
-//         `SELECT
-//             tm.id,
-//             t.date,
-//             sc.category_image
-//         FROM
-//             team_members tm
-//             JOIN tournaments t ON tm.tournament_id = t.id
-//             JOIN sport_category sc ON t.category_id = sc.id
-//         WHERE
-//             user_id = $1`,[user_id]
-//     );
+/**
+ * @swagger
+ * /users/{id}/tickets/{ticket_id}/qr:
+ *   get:
+ *     summary: Get ticket details for QR generation
+ *     description: Retrieves ticket information, including the associated team name and code, based on the provided ticket ID for a specific user.
+ *     parameters:
+ *       - name: id  # Path parameter for user ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the user associated with the ticket.
+ *       - name: ticket_id  # Path parameter for ticket ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the ticket.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved ticket details for QR generation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   ticket:
+ *                     type: string
+ *                     description: The ticket code
+ *                     example: "TICKET123456"
+ *                   team_name:
+ *                     type: string
+ *                     description: The name of the team associated with the ticket
+ *                     example: "Team A"
+ *                   code:
+ *                     type: string
+ *                     description: The unique code for the team
+ *                     example: "TEAMCODE789"
+ *       404:
+ *         description: Ticket not found
+ *       500:
+ *         description: Internal server error, failed to retrieve data.
+ */
+const getTicketQR = async (request, response) => {
+  const ticket_id = request.params.ticket_id;  
+  const user_id = request.params.id;
 
+  try {
+    const result = await pool.query(
+        `SELECT
+            tm.ticket,
+            t.team_name,
+            t.code
+        FROM
+            team_members tm
+            JOIN teams t ON tm.team_id = t.id
+        WHERE
+           tm.user_id = $1 AND tm.id = $2`, [user_id, ticket_id]
+    );
+    
+    if (result.rowCount === 0) {
+        return response.status(404).json({ message: "Ticket not found" });
+    }
+    
+    response.status(200).json(result.rows);
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+}
 
-
-//   }
-
-
-// }
 
 module.exports = {
     getUsers,
@@ -997,5 +1045,6 @@ module.exports = {
     getUsersTournamentsHistory,
     getTopPicks,
     getUserTickets,
-    getUsersOwnedTournaments
+    getUsersOwnedTournaments,
+    getTicketQR
 };

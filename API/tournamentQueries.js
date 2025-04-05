@@ -701,6 +701,53 @@ const getLeaderboardByTournament = async (request, response) =>{
     }
 }
 
+
+/**
+ * @swagger
+ * /tournaments/{id}/leaderboard/remove:
+ *   delete:
+ *     summary: Remove a team from the leaderboard
+ *     description: Removes a team from the leaderboard for a specific tournament by the provided tournament ID and team ID.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tournament_id
+ *               - team_id
+ *             properties:
+ *               tournament_id:
+ *                 type: integer
+ *                 description: The ID of the tournament.
+ *                 example: 1
+ *               team_id:
+ *                 type: integer
+ *                 description: The ID of the team to be removed.
+ *                 example: 5
+ *     responses:
+ *       200:
+ *         description: Successfully removed the team from the leaderboard
+ *       404:
+ *         description: Leaderboard record not found for the specified tournament and team
+ *       500:
+ *         description: Internal server error, failed to remove record.
+ */
+const removeFromLeaderboard = async (request, response) => {
+    const { tournament_id, team_id } = request.body;
+    try {
+        await pool.query(
+            `DELETE FROM leaderboard
+                WHERE tournament_id = $1 AND team_id = $2`,
+            [tournament_id, team_id]
+        );
+        response.status(200).json({ message: "Record removed from leaderboard" });
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
 // this function generates random codes
 const generateCode = (byte_length) => {
     return crypto.randomBytes(byte_length).toString('hex').toUpperCase();
@@ -836,16 +883,10 @@ const addTeamToTournament = async (request, response) => {
  *                 message:
  *                   type: string
  *                   example: "User added to the team"
+ *       400:
+ *         description: The team is already full
  *       404:
- *         description: Team not found with the provided code
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Team not found"
+ *         description: Team or tournament not found
  *       500:
  *         description: Internal server error, failed to add user to the team.
  */
@@ -867,7 +908,32 @@ const joinTeamAtTournament = async (request, response) => {
 
         const team_id = teamResult.rows[0].id;
 
-        // 2. Insert into team_members
+        // 2. Get the max team size from the tournaments table
+        const tournamentResult = await pool.query(
+            `SELECT max_team_size FROM tournaments WHERE id = $1`,
+            [tournament_id]
+        );
+
+        if (tournamentResult.rowCount === 0) {
+            return response.status(404).json({ message: "Tournament not found" });
+        }
+
+        const maxTeamSize = tournamentResult.rows[0].max_team_size;
+
+        // 3. Count the current number of members in the team
+        const membersCountResult = await pool.query(
+            `SELECT COUNT(*) FROM team_members WHERE team_id = $1`,
+            [team_id]
+        );
+
+        const currentMembersCount = parseInt(membersCountResult.rows[0].count, 10);
+
+        // 4. Check if the team is already full
+        if (currentMembersCount >= maxTeamSize) {
+            return response.status(400).json({ message: "Team is already full" });
+        }
+
+        // 5. Insert the new member into the team_members table
         await pool.query(
             `INSERT INTO team_members (user_id, team_id, tournament_id, ticket) 
              VALUES ($1, $2, $3, $4)`,
@@ -878,7 +944,7 @@ const joinTeamAtTournament = async (request, response) => {
     } catch (error) {
         response.status(500).json({ error: error.message });
     }
-};
+}; // Chat GPT generated
 
 
 
@@ -945,7 +1011,7 @@ const getEnrolledTeams = async (request, response) => {
 
 /**
  * @swagger
- * /tickets/check/{id}:
+ * /tournaments/{id}/check-tickets:
  *   post:
  *     summary: "Check if a ticket exists for a tournament"
  *     description: "This endpoint checks whether a ticket exists for the provided tournament."
@@ -1009,6 +1075,59 @@ const checkTickets = async (request, response) => {
     }
 }
 
+/**
+ * @swagger
+ * /tournaments/{id}/teams/count:
+ *   get:
+ *     summary: Get the count of teams enrolled in a tournament
+ *     description: Retrieves the total number of teams that are enrolled in a specific tournament.
+ *     parameters:
+ *       - name: id  # Path parameter for tournament ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the tournament.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the number of teams for the tournament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   team_count:
+ *                     type: integer
+ *                     description: The total number of teams in the tournament
+ *                     example: 10
+ *       404:
+ *         description: No teams found for the specified tournament
+ *       500:
+ *         description: Internal server error, failed to retrieve data.
+ */
+const getTeamCount = async (request, response) => {
+    const tournament_id = request.params.id;
+    try {
+        const result = await pool.query(
+            `SELECT
+                COUNT(*) AS team_count
+            FROM
+                teams t
+            WHERE
+                t.tournament_id = $1
+            GROUP BY t.tournament_id`, [tournament_id]
+        );
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({ message: "No teams found for this tournament" });
+        }
+
+        response.status(200).json(result.rows);
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+} 
 module.exports = {
     getTournaments,
     getTournamentInfo,
@@ -1018,8 +1137,10 @@ module.exports = {
     stopTournament,
     addRecordToLeaderboard,
     getLeaderboardByTournament,
+    removeFromLeaderboard,
     addTeamToTournament,
     joinTeamAtTournament,
     getEnrolledTeams,
-    checkTickets
+    checkTickets,
+    getTeamCount
 };
