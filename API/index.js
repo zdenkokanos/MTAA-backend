@@ -58,15 +58,15 @@ app.get('/users/:id/tournaments', dbUser.getUsersTournaments);
 app.get('/users/:id/tournaments/history', dbUser.getUsersTournamentsHistory);
 app.get('/users/:id/tournaments/owned', dbUser.getUsersOwnedTournaments);
 app.get('/users/:id/top-picks', dbUser.getTopPicks);
-app.get('/users/:id/tickets', dbUser.getUserTickets)
+app.get('/users/:id/tickets', dbUser.getUserTickets);
 // Tournaments
 app.get('/tournaments', dbTournament.getTournaments);
 app.get('/tournaments/:id/info', dbTournament.getTournamentInfo);
 app.get('/tournaments/:id/leaderboard', dbTournament.getLeaderboardByTournament);
 app.get('/tournaments/:id/enrolled', dbTournament.getEnrolledTeams);
 // Sport categories
-app.get('/categories/:sportName', dbCategories.getCategoriesId)  // TODO: neviem ci treba
-app.get('/categories', dbCategories.getAllCategories) // TODO: dal by som tournaments/categories
+app.get('/categories/:sportName', dbCategories.getCategoriesId);  // TODO: neviem ci treba
+app.get('/categories', dbCategories.getAllCategories); // TODO: dal by som tournaments/categories
 // Tickets
 
 //// ## POSTs ##
@@ -78,17 +78,17 @@ app.post('/tournaments', dbTournament.createTournament);
 app.post('/tournaments/:id/register', dbTournament.addTeamToTournament);
 app.post('/tournaments/:id/join_team', dbTournament.joinTeamAtTournament);
 app.post('/tournaments/leaderboard/add', dbTournament.addRecordToLeaderboard);
-
+app.post('/tournaments/:id/check-tickets', dbTournament.checkTickets);
 
 //// ## PUTs ##
 // Users
-app.put('/users/changePassword', dbUser.changePassword)
-app.put('/users/editProfile', dbUser.editProfile)
-app.put('/users/editPreferences', dbUser.editPreferences)
+app.put('/users/changePassword', dbUser.changePassword);
+app.put('/users/editProfile', dbUser.editProfile);
+app.put('/users/editPreferences', dbUser.editPreferences);
 // Tournaments
-app.put('/tournaments/edit', dbTournament.editTournament)
-app.put('/tournaments/:id/start', dbTournament.startTournament)
-app.put('/tournaments/:id/stop', dbTournament.stopTournament)
+app.put('/tournaments/edit', dbTournament.editTournament);
+app.put('/tournaments/:id/start', dbTournament.startTournament);
+app.put('/tournaments/:id/stop', dbTournament.stopTournament);
 
 // Start the server and listen on specified port
 app.listen(port, () => {

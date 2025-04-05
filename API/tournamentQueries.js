@@ -5,16 +5,23 @@ const crypto = require('crypto');
  * @swagger
  * /tournaments:
  *   get:
- *     summary: Get all tournaments with sport category filter
- *     description: Returns a list of tournaments, filtered by sport category.
+ *     summary: Get all tournaments with sport category filter excluding user’s assigned tournaments
+ *     description: Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of.
  *     parameters:
  *       - in: query
- *         name: sport_category
+ *         name: category_id
  *         schema:
- *           type: string
- *         required: false
- *         description: The name of the sport category to filter tournaments.
- *         example: Basketball
+ *           type: integer
+ *         required: true
+ *         description: ID of the sport category to filter tournaments.
+ *         example: 2
+ *       - in: query
+ *         name: user_id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the user to exclude tournaments they are already assigned to.
+ *         example: 7
  *     responses:
  *       200:
  *         description: List of tournaments retrieved successfully.
@@ -25,21 +32,16 @@ const crypto = require('crypto');
  *               items:
  *                 type: object
  *                 properties:
- *                   tournament_id:
+ *                   id:
  *                     type: integer
  *                     example: 1
- *                   owner_id:
- *                     type: integer
- *                     example: 5
  *                   tournament_name:
  *                     type: string
  *                     example: Summer Basketball Championship
- *                   category_id:
- *                     type: integer
- *                     example: 2
- *                   location_name:
+ *                   date:
  *                     type: string
- *                     example: Los Angeles Sports Arena
+ *                     format: date-time
+ *                     example: "2025-07-10T10:00:00Z"
  *                   latitude:
  *                     type: number
  *                     format: float
@@ -48,79 +50,35 @@ const crypto = require('crypto');
  *                     type: number
  *                     format: float
  *                     example: -118.2437
- *                   level:
+ *                   category_image:
  *                     type: string
- *                     example: Amateur
- *                   max_team_size:
- *                     type: integer
- *                     example: 5
- *                   game_setting:
- *                     type: string
- *                     example: Outdoor
- *                   entry_fee:
- *                     type: number
- *                     format: float
- *                     example: 20.00
- *                   prize_description:
- *                     type: string
- *                     example: Trophy and cash prize
- *                   is_public:
- *                     type: boolean
- *                     example: true
- *                   additional_info:
- *                     type: string
- *                     example: Bring your own jerseys
- *                   status:
- *                     type: string
- *                     example: Upcoming
- *                   date:
- *                     type: string
- *                     format: date-time
- *                     example: "2025-07-10T10:00:00Z"
- *                   category_name:
- *                     type: string
- *                     example: Basketball
+ *                     example: /images/basketball.png
  *       404:
  *         description: No tournaments found.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Tournaments are empty
  *       500:
  *         description: Internal server error.
  */
-const getTournaments = async (request, response) => { //TODO: Nestaci len id a obrazok datum a to co zobrazime? zbytocne tahame vela info
+const getTournaments = async (request, response) => { 
     try {
-        const sportCategory = request.query.sport_category;
+        const {category_id, user_id} = request.query;
         const { rows } = await pool.query(
             `SELECT
-                t.id AS tournament_id,  
-                t.owner_id,
+                t.id,
                 t.tournament_name,
-                t.category_id,
-                t.location_name,
+                t.date,
                 t.latitude,
                 t.longitude,
-                t.level,
-                t.max_team_size,
-                t.game_setting,
-                t.entry_fee,
-                t.prize_description,
-                t.is_public,
-                t.additional_info,
-                t.status,
-                t.date,
-                sc.id AS category_id, 
-                sc.category_name
+                sc.category_image
             FROM
                 tournaments t
             JOIN sport_category sc ON t.category_id = sc.id
             WHERE
-                sc.category_name = $1`, [sportCategory]
+                t.category_id = $1
+                AND t.id NOT IN (
+                    SELECT tm.tournament_id
+                    FROM team_members tm
+                    WHERE tm.user_id = $2
+                )`, [category_id, user_id]
         );
 
         if (rows.length === 0) {
@@ -739,7 +697,7 @@ const getLeaderboardByTournament = async (request, response) =>{
         }
         response.status(200).json( result.rows )
     } catch (error) {
-        response.status(500).json({ erro: error.message })
+        response.status(500).json({ error: error.message })
     }
 }
 
@@ -985,6 +943,72 @@ const getEnrolledTeams = async (request, response) => {
     }
 }
 
+/**
+ * @swagger
+ * /tickets/check/{id}:
+ *   post:
+ *     summary: "Check if a ticket exists for a tournament"
+ *     description: "This endpoint checks whether a ticket exists for the provided tournament."
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         description: "The tournament ID to check against."
+ *         required: true
+ *         type: string
+ *       - name: ticket
+ *         in: body
+ *         description: "The ticket code to check."
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             ticket:
+ *               type: string
+ *               description: "The ticket code to check."
+ *     responses:
+ *       200:
+ *         description: "Ticket found"
+ *         schema:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *               description: "ID of the team member"
+ *             name:
+ *               type: string
+ *               description: "Name of the team member"
+ *             role:
+ *               type: string
+ *               description: "Role of the team member in the tournament"
+ *       404:
+ *         description: "Ticket not found"
+ *       500:
+ *         description: "Internal server error"
+ */
+const checkTickets = async (request, response) => {
+    const tournament_id = request.params.id;
+    const { code } = request.body;
+
+    try {
+        const result = await pool.query(
+            `SELECT
+                *
+            FROM
+                team_members
+            WHERE
+                tournament_id = $1 AND ticket = $2`, [tournament_id, code]
+        );
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({ message: "Ticket not found" });
+        }
+
+        response.status(200).json(result.rows[0]);
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
@@ -996,5 +1020,6 @@ module.exports = {
     getLeaderboardByTournament,
     addTeamToTournament,
     joinTeamAtTournament,
-    getEnrolledTeams
+    getEnrolledTeams,
+    checkTickets
 };
