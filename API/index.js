@@ -44,29 +44,29 @@ const swaggerSpec = swaggerJSDoc(swaggerOptions);
 // Serve Swagger docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-
-
 // Define a simple route for the root of the application
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
-
+//TODO: Pridat mazanie je to v podmienkach
 //// ## GETs ##
 // Users
 app.get('/users', dbUser.getUsers);
-app.get('/users/info/:id', dbUser.getUserInfo);
-app.get('/users/id/:email', dbUser.getUserId);
-app.get('/users/tournaments/:id', dbUser.getUsersTournaments);
+app.get('/users/:id/info', dbUser.getUserInfo);
+app.get('/users/:email/id', dbUser.getUserId);
+app.get('/users/:id/tournaments', dbUser.getUsersTournaments);
+app.get('/users/:id/tournaments/history', dbUser.getUsersTournamentsHistory);
+app.get('/users/:id/tournaments/owned', dbUser.getUsersOwnedTournaments);
 app.get('/users/:id/top-picks', dbUser.getTopPicks);
 app.get('/users/:id/tickets', dbUser.getUserTickets)
 // Tournaments
 app.get('/tournaments', dbTournament.getTournaments);
-app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
-app.get('/tournaments/leaderboard/info/:id', dbTournament.getLeaderboardByTournament);
+app.get('/tournaments/:id/info', dbTournament.getTournamentInfo);
+app.get('/tournaments/:id/leaderboard', dbTournament.getLeaderboardByTournament);
 // Sport categories
-app.get('/categories/:sportName', dbCategories.getCategoriesId)
-app.get('/categories', dbCategories.getAllCategories)
+app.get('/categories/:sportName', dbCategories.getCategoriesId)  // TODO: neviem ci treba
+app.get('/categories', dbCategories.getAllCategories) // TODO: dal by som tournaments/categories
 // Tickets
 
 //// ## POSTs ##
@@ -76,6 +76,7 @@ app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite pro
 //Tournaments
 app.post('/tournaments', dbTournament.createTournament);
 app.post('/tournaments/:id/register', dbTournament.addTeamToTournament);
+app.post('/tournaments/:id/join_team', dbTournament.joinTeamAtTournament);
 app.post('/tournaments/leaderboard/add', dbTournament.addRecordToLeaderboard);
 
 
@@ -86,8 +87,8 @@ app.put('/users/editProfile', dbUser.editProfile)
 app.put('/users/editPreferences', dbUser.editPreferences)
 // Tournaments
 app.put('/tournaments/edit', dbTournament.editTournament)
-app.put('/tournaments/start/:id', dbTournament.startTournament)
-app.put('/tournaments/stop/:id', dbTournament.stopTournament)
+app.put('/tournaments/:id/start', dbTournament.startTournament)
+app.put('/tournaments/:id/stop', dbTournament.stopTournament)
 
 // Start the server and listen on specified port
 app.listen(port, () => {
