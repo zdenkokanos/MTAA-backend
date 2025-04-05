@@ -125,7 +125,7 @@ const insertUser = async (request, response) => {
             
             //generate token
             const token = jwt.sign({ userId: newUser.id }, JWT_SECRET);
-            
+
             response.status(201).json({ token, user: newUser });
         }
     } catch (error) {
