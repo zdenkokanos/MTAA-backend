@@ -959,7 +959,6 @@ const getUserTickets = async (request, response) =>{
   }
 }  
 
-
 /**
  * @swagger
  * /users/{id}/tickets/{ticket_id}/qr:
