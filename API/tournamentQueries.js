@@ -1,4 +1,5 @@
 const pool = require('./pooling'); // Import the database pool
+const crypto = require('crypto');
 
 /**
  * @swagger
@@ -729,6 +730,99 @@ const getLeaderboardByTournament = async (request, response) =>{
     }
 }
 
+// this function generates random codes
+const generateCode = (byte_length) => {
+    return crypto.randomBytes(byte_length).toString('hex').toUpperCase();
+};
+
+/**
+ * @swagger
+ * /tournaments/{id}/register:
+ *   post:
+ *     summary: Register a team for a tournament
+ *     description: Registers a team with a name and a user for a specific tournament. Generates a unique team code and a ticket for the user.
+ *     parameters:
+ *       - name: id  # Path parameter for tournament ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the tournament.
+ *     requestBody:
+ *       required: true  # Body parameters are required
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - team_name  # Required parameter for team name
+ *               - user_id  # Required parameter for user ID
+ *             properties:
+ *               team_name:
+ *                 type: string
+ *                 description: The name of the team.
+ *                 example: "Team A"
+ *               user_id:
+ *                 type: integer
+ *                 description: The ID of the user registering the team.
+ *                 example: 1
+ *     responses:
+ *       200:
+ *         description: Successfully registered team and user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Team and member registered"
+ *                 team_code:
+ *                   type: string
+ *                   description: The unique code generated for the team
+ *                   example: "U8ED45NH"
+ *                 ticket:
+ *                   type: string
+ *                   description: The unique ticket hash for the user
+ *                   example: "TICKET123456"
+ *       400:
+ *         description: Invalid input, missing required fields or invalid data.
+ *       500:
+ *         description: Internal server error, failed to register team.
+ */
+const addTeamToTournament = async (request, response) => {
+    const { team_name, user_id } = request.body;
+    const tournament_id = request.params.id;
+    const code = generateCode(4);
+    const ticket_hash = generateCode(6);
+
+    try {
+        // 1. Insert team and return its id
+        const teamResult = await pool.query(
+            `INSERT INTO teams (team_name, code, tournament_id) 
+             VALUES ($1, $2, $3)
+             RETURNING id`, 
+            [team_name, code, tournament_id]
+        );
+
+        const team_id = teamResult.rows[0].id;
+
+        // 2. Insert into team_members
+        await pool.query(
+            `INSERT INTO team_members (user_id, team_id, tournament_id, ticket) 
+             VALUES ($1, $2, $3, $4)`,
+            [user_id, team_id, tournament_id, ticket_hash]
+        );
+
+        response.status(200).json({ 
+            message: "Team and member registered",
+            team_code: code,
+            ticket: ticket_hash
+        });
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
@@ -737,5 +831,6 @@ module.exports = {
     startTournament,
     stopTournament,
     addRecordToLeaderboard,
-    getLeaderboardByTournament
+    getLeaderboardByTournament,
+    addTeamToTournament
 };

@@ -59,6 +59,7 @@ app.get('/users/info/:id', dbUser.getUserInfo);
 app.get('/users/id/:email', dbUser.getUserId);
 app.get('/users/tournaments/:id', dbUser.getUsersTournaments);
 app.get('/users/:id/top-picks', dbUser.getTopPicks);
+app.get('/users/:id/tickets', dbUser.getUserTickets)
 // Tournaments
 app.get('/tournaments', dbTournament.getTournaments);
 app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
@@ -67,8 +68,6 @@ app.get('/tournaments/leaderboard/info/:id', dbTournament.getLeaderboardByTourna
 app.get('/categories/:sportName', dbCategories.getCategoriesId)
 app.get('/categories', dbCategories.getAllCategories)
 // Tickets
-app.get('/tickets/byuser/:id', dbTicket.getUserTickets)
-
 
 //// ## POSTs ##
 // Users
@@ -76,6 +75,7 @@ app.post('/users', dbUser.insertUser);
 app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably // zmenit na REST
 //Tournaments
 app.post('/tournaments', dbTournament.createTournament);
+app.post('/tournaments/:id/register', dbTournament.addTeamToTournament);
 app.post('/tournaments/leaderboard/add', dbTournament.addRecordToLeaderboard);
 
 
