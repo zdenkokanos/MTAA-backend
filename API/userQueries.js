@@ -981,9 +981,34 @@ const getUserTickets = async (request, response) =>{
       }
       response.status(200).json( result.rows )
   } catch (error) {
-      response.status(500).json({ erro: error.message })
+      response.status(500).json({ error: error.message })
   }
 }  
+
+// const getUserQR = async (request, response) => {
+//   const user_id = request.params.id;
+//   const tournament_id = request.params.tournament_id;
+
+//   try {
+//     const result = await pool.query(
+//         `SELECT
+//             tm.id,
+//             t.date,
+//             sc.category_image
+//         FROM
+//             team_members tm
+//             JOIN tournaments t ON tm.tournament_id = t.id
+//             JOIN sport_category sc ON t.category_id = sc.id
+//         WHERE
+//             user_id = $1`,[user_id]
+//     );
+
+
+
+//   }
+
+
+// }
 
 module.exports = {
     getUsers,

@@ -8,7 +8,6 @@ const port = 3000
 const dbUser = require('./userQueries')
 const dbTournament = require('./tournamentQueries')
 const dbCategories = require('./sportCategoryQueries')
-const dbTicket = require('./ticketQueries')
 const dbAuth = require('./authQueries')
 
 // Import Swagger and setup
@@ -64,6 +63,7 @@ app.get('/users/:id/tickets', dbUser.getUserTickets)
 app.get('/tournaments', dbTournament.getTournaments);
 app.get('/tournaments/:id/info', dbTournament.getTournamentInfo);
 app.get('/tournaments/:id/leaderboard', dbTournament.getLeaderboardByTournament);
+app.get('/tournaments/:id/enrolled', dbTournament.getEnrolledTeams);
 // Sport categories
 app.get('/categories/:sportName', dbCategories.getCategoriesId)  // TODO: neviem ci treba
 app.get('/categories', dbCategories.getAllCategories) // TODO: dal by som tournaments/categories

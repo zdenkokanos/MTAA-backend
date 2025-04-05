@@ -922,6 +922,69 @@ const joinTeamAtTournament = async (request, response) => {
     }
 };
 
+
+
+/**
+ * @swagger
+ * /tournaments/{id}/enrolled:
+ *   get:
+ *     summary: Get a list of teams enrolled in a tournament
+ *     description: Retrieves a list of teams enrolled in a specific tournament, along with the number of members in each team.
+ *     parameters:
+ *       - name: id  # Path parameter for tournament ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the tournament.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved list of teams and their members
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   team_name:
+ *                     type: string
+ *                     description: The name of the team
+ *                     example: "Team A"
+ *                   number_of_members:
+ *                     type: integer
+ *                     description: The number of members in the team
+ *                     example: 5
+ *       404:
+ *         description: No teams found for this tournament
+ *       500:
+ *         description: Internal server error, failed to retrieve data.
+ */
+const getEnrolledTeams = async (request, response) => {
+    const tournament_id = request.params.id;
+
+    try {
+        const result = await pool.query(
+            `SELECT
+                t.team_name,
+                COUNT(*) AS number_of_members
+            FROM
+                teams t
+                JOIN team_members tm ON t.id = tm.team_id
+            WHERE
+                t.tournament_id = $1
+            GROUP BY t.team_name`, [tournament_id]
+        );
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({ message: "No teams found for this tournament" });
+        }
+
+        response.status(200).json(result.rows);
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
@@ -932,5 +995,6 @@ module.exports = {
     addRecordToLeaderboard,
     getLeaderboardByTournament,
     addTeamToTournament,
-    joinTeamAtTournament
+    joinTeamAtTournament,
+    getEnrolledTeams
 };
