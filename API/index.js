@@ -4,6 +4,11 @@ const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
 
+const verifyToken = require('./middleware/authMiddleware');
+app.get('/protected', verifyToken, (request, response) => {
+  response.json({ message: `Hello user ${request.user.userId}` });
+});
+
 // Import other modules
 const dbUser = require('./userQueries')
 const dbTournament = require('./tournamentQueries')
@@ -48,10 +53,12 @@ app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
+// For each protected endpoint verify token
+app.use('/protected', verifyToken);
 //TODO: Pridat mazanie je to v podmienkach
 //// ## GETs ##
 // Users
-app.get('/users', dbUser.getUsers);
+app.get('/protected/users', dbUser.getUsers);
 app.get('/users/:id/info', dbUser.getUserInfo);
 app.get('/users/:email/id', dbUser.getUserId);
 app.get('/users/:id/tournaments', dbUser.getUsersTournaments);
@@ -71,8 +78,8 @@ app.get('/tournaments/:id/teams/count', dbTournament.getTeamCount);
 
 //// ## POSTs ##
 // Users
-app.post('/users', dbUser.insertUser);
-app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably // zmenit na REST
+app.post('/auth/register', dbAuth.insertUser);
+app.post('/auth/login', dbAuth.login); 
 //Tournaments
 app.post('/tournaments', dbTournament.createTournament);
 app.post('/tournaments/:id/register', dbTournament.addTeamToTournament);
