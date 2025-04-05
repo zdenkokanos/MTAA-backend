@@ -61,7 +61,9 @@ const getUserTickets = async (request, response) =>{
     } catch (error) {
         response.status(500).json({ erro: error.message })
     }
-}
+}  // toto treba prerobit!!!
+
+
 
 module.exports = {
     getUserTickets

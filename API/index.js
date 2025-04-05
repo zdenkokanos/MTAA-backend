@@ -9,6 +9,7 @@ const dbUser = require('./userQueries')
 const dbTournament = require('./tournamentQueries')
 const dbCategories = require('./sportCategoryQueries')
 const dbTicket = require('./ticketQueries')
+const dbAuth = require('./authQueries')
 
 // Import Swagger and setup
 const swaggerUi = require('swagger-ui-express');
@@ -57,12 +58,14 @@ app.get('/users', dbUser.getUsers);
 app.get('/users/info/:id', dbUser.getUserInfo);
 app.get('/users/id/:email', dbUser.getUserId);
 app.get('/users/tournaments/:id', dbUser.getUsersTournaments);
+app.get('/users/:id/top-picks', dbUser.getTopPicks);
 // Tournaments
 app.get('/tournaments', dbTournament.getTournaments);
 app.get('/tournaments/info/:id', dbTournament.getTournamentInfo);
 app.get('/tournaments/leaderboard/info/:id', dbTournament.getLeaderboardByTournament);
 // Sport categories
 app.get('/categories/:sportName', dbCategories.getCategoriesId)
+app.get('/categories', dbCategories.getAllCategories)
 // Tickets
 app.get('/tickets/byuser/:id', dbTicket.getUserTickets)
 
@@ -70,7 +73,7 @@ app.get('/tickets/byuser/:id', dbTicket.getUserTickets)
 //// ## POSTs ##
 // Users
 app.post('/users', dbUser.insertUser);
-app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably
+app.post('/users/login', dbUser.loginUser); // not in documentation, rewrite probably // zmenit na REST
 //Tournaments
 app.post('/tournaments', dbTournament.createTournament);
 app.post('/tournaments/leaderboard/add', dbTournament.addRecordToLeaderboard);

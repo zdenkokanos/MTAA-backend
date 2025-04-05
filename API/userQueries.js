@@ -1,5 +1,9 @@
 // queries.js
 const pool = require('./pooling'); // Import the database pool
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+const JWT_SECRET = 'jwt_secret';  // For JWT tokenization, it should typically be stored in an environment variable for security reasons. 
+// However, in this example, it is hardcoded to make it easier for supervisors to test and verify the functionality during development.
 
 /**
 * @swagger
@@ -128,12 +132,11 @@ const getUserInfo = async (request, response) => {
         id,
         first_name,
         last_name,
-        gender,
-        age,
         email,
         preferred_longitude,
         preferred_latitude,
-        created_at
+        created_at,
+        image_path
       FROM
         users
       WHERE
@@ -266,6 +269,13 @@ const getUserId = async (request, response) => {
  *                 type: number
  *                 format: float
  *                 example: 34.0522
+ *               preferences:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   example: 1
+ *                 description: List of sport IDs the user prefers
+ *                 example: [1, 2, 3]
  *     responses:
  *       201:
  *         description: User successfully created.
@@ -284,29 +294,44 @@ const getUserId = async (request, response) => {
  */
 const insertUser = async (request, response) => {
   try {
-    const { first_name, last_name, gender, age, email, password, preferred_location, preferred_longitude, preferred_latitude } = request.body;
+    const { first_name, last_name, email, password, preferred_location, preferred_longitude, preferred_latitude, preferences, image_path } = request.body;
+
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, saltRounds); 
 
     const { rows } = await pool.query(
       `INSERT INTO
         users (
           first_name,
           last_name,
-          gender,
-          age,
           email,
           password,
           preferred_location,
           preferred_longitude,
-          preferred_latitude
+          preferred_latitude,
+          image_path
         )
       VALUES
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING
         id;`,
-      [first_name, last_name, gender, age, email, password, preferred_location, preferred_longitude, preferred_latitude]
+      [first_name, last_name, email, hashedPassword, preferred_location, preferred_longitude, preferred_latitude, image_path]
     );
 
-    response.status(201).json({ id: rows[0].id }); // Return the inserted user ID
+    const userId = rows[0].id;
+    
+    if (Array.isArray(preferences) && preferences.length > 0) {
+      const preferenceQueries = preferences.map(sportId => {  // map loops over each item in array
+        return pool.query(
+          `INSERT INTO preferences (user_id, sport_id) VALUES ($1, $2);`,
+          [userId, sportId]
+        );
+      });
+
+      await Promise.all(preferenceQueries);
+    }
+
+    response.status(201).json({ id: userId }); // Return the inserted user ID
   } catch (error) {
     response.status(500).json({ error: error.message });
   }
@@ -354,8 +379,8 @@ const loginUser = async (request, response) => {
  *                 example: 1
  *               newPassword:
  *                 type: string
- *                 description: The new hashed password.
- *                 example: hashedPassword1
+ *                 description: The new plain password (will be hashed by the server).
+ *                 example: newPlainPassword123
  *     responses:
  *       200:
  *         description: Password changed successfully.
@@ -368,7 +393,7 @@ const loginUser = async (request, response) => {
  *                   type: string
  *                   example: Password changed successfully
  *       400:
- *         description: Bad request, missing required fields.
+ *         description: Bad request, missing required fields or invalid data.
  *       500:
  *         description: Internal server error.
  */
@@ -376,9 +401,13 @@ const changePassword = async (request, response) => {
   try {
     const { id, newPassword } = request.body;
 
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update the password in the database
     await pool.query(
       `UPDATE users SET password = $1 WHERE id = $2;`,
-      [newPassword, id]
+      [hashedPassword, id]
     );
 
     response.status(200).json({ message: "Password changed successfully" });
@@ -615,6 +644,136 @@ const getUsersTournaments = async (request, response) =>{
   }
 }
 
+/**
+ * @swagger
+ * /users/{id}/top-picks:
+ *   get:
+ *     summary: Retrieve top upcoming tournaments based on user preferences
+ *     description: Retrieves the top upcoming tournaments that match the user's preferences and are marked as public.
+ *     operationId: getTopPicks
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The ID of the user whose preferences will be used to filter tournaments.
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       '200':
+ *         description: A list of upcoming tournaments that match the user's preferences.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   tournament_id:
+ *                     type: integer
+ *                     example: 1
+ *                   tournament_name:
+ *                     type: string
+ *                     example: "NYC Football Cup"
+ *                   category_id:
+ *                     type: integer
+ *                     example: 1
+ *                   location_name:
+ *                     type: string
+ *                     example: "New York Stadium"
+ *                   latitude:
+ *                     type: number
+ *                     format: float
+ *                     example: 40.7128
+ *                   longitude:
+ *                     type: number
+ *                     format: float
+ *                     example: -74.006
+ *                   level:
+ *                     type: string
+ *                     example: "Amateur"
+ *                   max_team_size:
+ *                     type: integer
+ *                     example: 11
+ *                   game_setting:
+ *                     type: string
+ *                     example: "Outdoor"
+ *                   entry_fee:
+ *                     type: number
+ *                     format: float
+ *                     example: 100.00
+ *                   prize_description:
+ *                     type: string
+ *                     example: "Trophy + $500"
+ *                   is_public:
+ *                     type: boolean
+ *                     example: true
+ *                   additional_info:
+ *                     type: string
+ *                     example: "Bring your own gear"
+ *                   status:
+ *                     type: string
+ *                     example: "Upcoming"
+ *                   date:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2025-06-30T22:00:00.000Z"
+ *                   category_image:
+ *                     type: string
+ *                     example: "football.png"
+ *       '400':
+ *         description: Bad Request - Invalid parameters or missing required data.
+ *       '500':
+ *         description: Internal Server Error - Something went wrong with the server.
+ */
+const getTopPicks = async (request, response) => {
+  try {
+      const userID = request.params.id;
+      
+      const { rows } = await pool.query(
+          `SELECT
+              t.id AS tournament_id,
+              t.tournament_name,
+              t.category_id,
+              t.location_name,
+              t.latitude,
+              t.longitude,
+              t.level,
+              t.max_team_size,
+              t.game_setting,
+              t.entry_fee,
+              t.prize_description,
+              t.is_public,
+              t.additional_info,
+              t.status,
+              t.date,
+              sc.category_image
+          FROM
+              tournaments t
+              JOIN sport_category sc ON t.category_id = sc.id
+              JOIN preferences p ON t.category_id = p.sport_id
+              AND $1 = p.user_id
+          WHERE
+              t.is_public = TRUE
+              AND t.status = 'Upcoming'
+              AND t.date > NOW()
+          ORDER BY
+              t.date ASC
+          LIMIT
+              5;`, [userID] // Pass the userID as parameter for query
+      );
+
+      if (rows.length === 0) {
+        return response.status(404).json({ message: "No upcoming tournaments found for this user" });
+    }
+      // Send response with the retrieved rows
+      response.status(200).json(rows);
+  } catch (error) {
+      // Handle errors and send a 500 response
+      response.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
     getUsers,
     getUserInfo,
@@ -624,5 +783,6 @@ module.exports = {
     changePassword,
     editProfile,
     editPreferences,
-    getUsersTournaments
+    getUsersTournaments,
+    getTopPicks
 };
