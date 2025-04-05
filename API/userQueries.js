@@ -613,7 +613,7 @@ const getUsersTournaments = async (request, response) =>{
   try {
       const result = await pool.query(
           `SELECT
-            t.id,
+            tm.id,
             t.tournament_name,
             t.date,
             t.latitude,
@@ -801,19 +801,19 @@ const getUsersTournamentsHistory = async (request, response) =>{
  * /users/{id}/top-picks:
  *   get:
  *     summary: Retrieve top upcoming tournaments based on user preferences
- *     description: Retrieves the top upcoming tournaments that match the user's preferences and are marked as public.
+ *     description: Returns up to 5 upcoming public tournaments that match the user's sport preferences and in which the user is not already participating.
  *     operationId: getTopPicks
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: The ID of the user whose preferences will be used to filter tournaments.
+ *         description: ID of the user whose preferences will be used to filter tournaments.
  *         schema:
  *           type: integer
  *           example: 1
  *     responses:
  *       '200':
- *         description: A list of upcoming tournaments that match the user's preferences.
+ *         description: A list of up to 5 upcoming tournaments matching the user's preferences.
  *         content:
  *           application/json:
  *             schema:
@@ -821,18 +821,16 @@ const getUsersTournamentsHistory = async (request, response) =>{
  *               items:
  *                 type: object
  *                 properties:
- *                   tournament_id:
+ *                   id:
  *                     type: integer
  *                     example: 1
  *                   tournament_name:
  *                     type: string
  *                     example: "NYC Football Cup"
- *                   category_id:
- *                     type: integer
- *                     example: 1
- *                   location_name:
+ *                   date:
  *                     type: string
- *                     example: "New York Stadium"
+ *                     format: date-time
+ *                     example: "2025-06-30T22:00:00.000Z"
  *                   latitude:
  *                     type: number
  *                     format: float
@@ -841,44 +839,15 @@ const getUsersTournamentsHistory = async (request, response) =>{
  *                     type: number
  *                     format: float
  *                     example: -74.006
- *                   level:
- *                     type: string
- *                     example: "Amateur"
- *                   max_team_size:
- *                     type: integer
- *                     example: 11
- *                   game_setting:
- *                     type: string
- *                     example: "Outdoor"
- *                   entry_fee:
- *                     type: number
- *                     format: float
- *                     example: 100.00
- *                   prize_description:
- *                     type: string
- *                     example: "Trophy + $500"
- *                   is_public:
- *                     type: boolean
- *                     example: true
- *                   additional_info:
- *                     type: string
- *                     example: "Bring your own gear"
- *                   status:
- *                     type: string
- *                     example: "Upcoming"
- *                   date:
- *                     type: string
- *                     format: date-time
- *                     example: "2025-06-30T22:00:00.000Z"
  *                   category_image:
  *                     type: string
  *                     example: "football.png"
- *       '400':
- *         description: Bad Request - Invalid parameters or missing required data.
+ *       '404':
+ *         description: No upcoming tournaments found for this user.
  *       '500':
- *         description: Internal Server Error - Something went wrong with the server.
+ *         description: Internal Server Error - Something went wrong on the server.
  */
-const getTopPicks = async (request, response) => {  // TODO: Treba sa dohodnut ci treba vsetky values lebo to sa bude volat az potom podla id
+const getTopPicks = async (request, response) => { 
   try {
       const userID = request.params.id;
       
@@ -899,6 +868,11 @@ const getTopPicks = async (request, response) => {  // TODO: Treba sa dohodnut c
               t.is_public = TRUE
               AND t.status = 'Upcoming'
               AND t.date > NOW()
+              AND t.id NOT IN (
+                    SELECT tm.tournament_id
+                    FROM team_members tm
+                    WHERE tm.user_id = $1
+                )
           ORDER BY
               t.date ASC
           LIMIT
@@ -985,30 +959,77 @@ const getUserTickets = async (request, response) =>{
   }
 }  
 
-// const getUserQR = async (request, response) => {
-//   const user_id = request.params.id;
-//   const tournament_id = request.params.tournament_id;
+/**
+ * @swagger
+ * /users/{id}/tickets/{ticket_id}/qr:
+ *   get:
+ *     summary: Get ticket details for QR generation
+ *     description: Retrieves ticket information, including the associated team name and code, based on the provided ticket ID for a specific user.
+ *     parameters:
+ *       - name: id  # Path parameter for user ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the user associated with the ticket.
+ *       - name: ticket_id  # Path parameter for ticket ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the ticket.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved ticket details for QR generation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   ticket:
+ *                     type: string
+ *                     description: The ticket code
+ *                     example: "TICKET123456"
+ *                   team_name:
+ *                     type: string
+ *                     description: The name of the team associated with the ticket
+ *                     example: "Team A"
+ *                   code:
+ *                     type: string
+ *                     description: The unique code for the team
+ *                     example: "TEAMCODE789"
+ *       404:
+ *         description: Ticket not found
+ *       500:
+ *         description: Internal server error, failed to retrieve data.
+ */
+const getTicketQR = async (request, response) => {
+  const ticket_id = request.params.ticket_id;  
+  const user_id = request.params.id;
 
-//   try {
-//     const result = await pool.query(
-//         `SELECT
-//             tm.id,
-//             t.date,
-//             sc.category_image
-//         FROM
-//             team_members tm
-//             JOIN tournaments t ON tm.tournament_id = t.id
-//             JOIN sport_category sc ON t.category_id = sc.id
-//         WHERE
-//             user_id = $1`,[user_id]
-//     );
+  try {
+    const result = await pool.query(
+        `SELECT
+            tm.ticket,
+            t.team_name,
+            t.code
+        FROM
+            team_members tm
+            JOIN teams t ON tm.team_id = t.id
+        WHERE
+           tm.user_id = $1 AND tm.id = $2`, [user_id, ticket_id]
+    );
+    
+    if (result.rowCount === 0) {
+        return response.status(404).json({ message: "Ticket not found" });
+    }
+    
+    response.status(200).json(result.rows);
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+}
 
-
-
-//   }
-
-
-// }
 
 module.exports = {
     getUsers,
@@ -1023,5 +1044,6 @@ module.exports = {
     getUsersTournamentsHistory,
     getTopPicks,
     getUserTickets,
-    getUsersOwnedTournaments
+    getUsersOwnedTournaments,
+    getTicketQR
 };
