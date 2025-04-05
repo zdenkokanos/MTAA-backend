@@ -1,4 +1,5 @@
 const pool = require('./pooling'); // Import the database pool
+const crypto = require('crypto');
 
 /**
  * @swagger
@@ -92,7 +93,7 @@ const pool = require('./pooling'); // Import the database pool
  *       500:
  *         description: Internal server error.
  */
-const getTournaments = async (request, response) => { 
+const getTournaments = async (request, response) => { //TODO: Nestaci len id a obrazok datum a to co zobrazime? zbytocne tahame vela info
     try {
         const sportCategory = request.query.sport_category;
         const { rows } = await pool.query(
@@ -134,7 +135,7 @@ const getTournaments = async (request, response) => {
 
 /**
  * @swagger
- * /tournaments/{id}:
+ * /tournaments/{id}/info:
  *   get:
  *     summary: Get tournament info by ID
  *     description: Returns detailed information about a specific tournament based on its ID.
@@ -227,14 +228,27 @@ const getTournamentInfo = async (request, response) => {
         const tournamentID = request.params.id;
         const { rows } = await pool.query(
             `SELECT
-                *
+                t.id,
+                t.tournament_name,
+                t.location_name,
+                t.latitude,
+                t.longitude,
+                t.level,
+                t.max_team_size,
+                t.game_setting,
+                t.entry_fee,
+                t.prize_description,
+                t.is_public,
+                t.additional_info,
+                t.status,
+                t.date,
+                sc.category_image
             FROM
                 tournaments t
             JOIN sport_category sc ON t.category_id = sc.id
             WHERE
                 t.id = $1`, [tournamentID]
         );
-
         if (rows.length === 0) {
             return response.status(404).json({ message: "Tournament not found" });
         }
@@ -502,7 +516,7 @@ const editTournament = async (request, response) => {
 
 /**
  * @swagger
- * /tournaments/start/{id}:
+ * /tournaments/{id}/start:
  *   put:
  *     summary: Start a tournament
  *     description: Updates the status of a tournament to "Ongoing" based on the tournament ID.
@@ -555,7 +569,7 @@ const startTournament = async (request, response) => {
 
 /**
  * @swagger
- * /tournaments/start/{id}:
+ * /tournaments/{id}/stop:
  *   put:
  *     summary: Stop a tournament
  *     description: Updates the status of a tournament to "Closed" based on the tournament ID.
@@ -608,7 +622,7 @@ const stopTournament = async (request, response) => {
 
 /**
  * @swagger
- * /leaderboard:
+ * /tournaments/leaderboard/add:
  *   post:
  *     summary: Add a new record to the leaderboard
  *     description: Adds a new team record to the leaderboard for a specific tournament and position.
@@ -671,7 +685,7 @@ const addRecordToLeaderboard = async (request, response) => {
 
 /**
  * @swagger
- * /leaderboard/tournament/{id}:
+ * /tournaments/{id}/leaderboard:
  *   get:
  *     summary: Get leaderboard for a specific tournament
  *     description: Retrieves all leaderboard records for a given tournament by its ID.
@@ -729,6 +743,248 @@ const getLeaderboardByTournament = async (request, response) =>{
     }
 }
 
+// this function generates random codes
+const generateCode = (byte_length) => {
+    return crypto.randomBytes(byte_length).toString('hex').toUpperCase();
+};
+
+/**
+ * @swagger
+ * /tournaments/{id}/register:
+ *   post:
+ *     summary: Register a team for a tournament
+ *     description: Registers a team with a name and a user for a specific tournament. Generates a unique team code and a ticket for the user.
+ *     parameters:
+ *       - name: id  # Path parameter for tournament ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the tournament.
+ *     requestBody:
+ *       required: true  # Body parameters are required
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - team_name  # Required parameter for team name
+ *               - user_id  # Required parameter for user ID
+ *             properties:
+ *               team_name:
+ *                 type: string
+ *                 description: The name of the team.
+ *                 example: "Team A"
+ *               user_id:
+ *                 type: integer
+ *                 description: The ID of the user registering the team.
+ *                 example: 1
+ *     responses:
+ *       200:
+ *         description: Successfully registered team and user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Team and member registered"
+ *                 team_code:
+ *                   type: string
+ *                   description: The unique code generated for the team
+ *                   example: "U8ED45NH"
+ *                 ticket:
+ *                   type: string
+ *                   description: The unique ticket hash for the user
+ *                   example: "TICKET123456"
+ *       400:
+ *         description: Invalid input, missing required fields or invalid data.
+ *       500:
+ *         description: Internal server error, failed to register team.
+ */
+const addTeamToTournament = async (request, response) => {
+    const { team_name, user_id } = request.body;
+    const tournament_id = request.params.id;
+    const code = generateCode(4);
+    const ticket_hash = generateCode(6);
+
+    try {
+        // 1. Insert team and return its id
+        const teamResult = await pool.query(
+            `INSERT INTO teams (team_name, code, tournament_id) 
+             VALUES ($1, $2, $3)
+             RETURNING id`, 
+            [team_name, code, tournament_id]
+        );
+
+        const team_id = teamResult.rows[0].id;
+
+        // 2. Insert into team_members
+        await pool.query(
+            `INSERT INTO team_members (user_id, team_id, tournament_id, ticket) 
+             VALUES ($1, $2, $3, $4)`,
+            [user_id, team_id, tournament_id, ticket_hash]
+        );
+
+        response.status(200).json({ 
+            message: "Team and member registered",
+            team_code: code,
+            ticket: ticket_hash
+        });
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+};
+
+
+/**
+ * @swagger
+ * /tournaments/{id}/join_team:
+ *   post:
+ *     summary: Join a team at a tournament
+ *     description: Adds a user to an existing team in a tournament by providing the team code.
+ *     parameters:
+ *       - name: id  # Path parameter for tournament ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the tournament.
+ *     requestBody:
+ *       required: true  # Body parameters are required
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_id  # Required parameter for user ID
+ *               - code     # Required parameter for team code
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 description: The ID of the user joining the team.
+ *                 example: 1
+ *               code:
+ *                 type: string
+ *                 description: The code of the team the user wants to join.
+ *                 example: "ABCD123"
+ *     responses:
+ *       200:
+ *         description: Successfully added user to the team
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User added to the team"
+ *       404:
+ *         description: Team not found with the provided code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Team not found"
+ *       500:
+ *         description: Internal server error, failed to add user to the team.
+ */
+const joinTeamAtTournament = async (request, response) => {
+    const { user_id, code } = request.body;
+    const tournament_id = request.params.id;
+    const ticket_hash = generateCode(6);
+
+    try {
+        // 1. Check if the team code exists
+        const teamResult = await pool.query(
+            `SELECT id FROM teams WHERE code = $1 AND tournament_id = $2`, 
+            [code, tournament_id]
+        );
+
+        if (teamResult.rowCount === 0) {
+            return response.status(404).json({ message: "Team not found" });
+        }
+
+        const team_id = teamResult.rows[0].id;
+
+        // 2. Insert into team_members
+        await pool.query(
+            `INSERT INTO team_members (user_id, team_id, tournament_id, ticket) 
+             VALUES ($1, $2, $3, $4)`,
+            [user_id, team_id, tournament_id, ticket_hash]
+        );
+
+        response.status(200).json({ message: "User added to the team" });
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+};
+
+
+
+/**
+ * @swagger
+ * /tournaments/{id}/enrolled:
+ *   get:
+ *     summary: Get a list of teams enrolled in a tournament
+ *     description: Retrieves a list of teams enrolled in a specific tournament, along with the number of members in each team.
+ *     parameters:
+ *       - name: id  # Path parameter for tournament ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the tournament.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved list of teams and their members
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   team_name:
+ *                     type: string
+ *                     description: The name of the team
+ *                     example: "Team A"
+ *                   number_of_members:
+ *                     type: integer
+ *                     description: The number of members in the team
+ *                     example: 5
+ *       404:
+ *         description: No teams found for this tournament
+ *       500:
+ *         description: Internal server error, failed to retrieve data.
+ */
+const getEnrolledTeams = async (request, response) => {
+    const tournament_id = request.params.id;
+
+    try {
+        const result = await pool.query(
+            `SELECT
+                t.team_name,
+                COUNT(*) AS number_of_members
+            FROM
+                teams t
+                JOIN team_members tm ON t.id = tm.team_id
+            WHERE
+                t.tournament_id = $1
+            GROUP BY t.team_name`, [tournament_id]
+        );
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({ message: "No teams found for this tournament" });
+        }
+
+        response.status(200).json(result.rows);
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+}
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
@@ -737,5 +993,8 @@ module.exports = {
     startTournament,
     stopTournament,
     addRecordToLeaderboard,
-    getLeaderboardByTournament
+    getLeaderboardByTournament,
+    addTeamToTournament,
+    joinTeamAtTournament,
+    getEnrolledTeams
 };

@@ -72,7 +72,7 @@ const getUsers = (request, response) => {
 
 /**
  * @swagger
- * /users/info/{id}:
+ * /users/{id}/info:
  *   get:
  *     summary: Get user info by user ID
  *     description: Retrieves detailed information of a user based on their ID
@@ -155,7 +155,7 @@ const getUserInfo = async (request, response) => {
 
 /**
  * @swagger
- * /users/id/{email}:
+ * /users/{email}/id:
  *   get:
  *     summary: Retrieve user ID by email
  *     description: Returns the user ID based on their unique email address.
@@ -180,24 +180,8 @@ const getUserInfo = async (request, response) => {
  *                   example: 2
  *       404:
  *         description: User not found.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: User not found
  *       500:
  *         description: Internal server error.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Internal server error"
  */
 const getUserId = async (request, response) => {
   try{
@@ -552,7 +536,7 @@ const editPreferences = async (request, response) => {
 
 /**
  * @swagger
- * /users/tournaments/{id}:
+ * /users/{id}/tournaments:
  *   get:
  *     summary: Get all tournaments a user is registered for
  *     description: Retrieves all tournaments where a specific user is registered.
@@ -628,11 +612,19 @@ const getUsersTournaments = async (request, response) =>{
 
   try {
       const result = await pool.query(
-          `SELECT t.*
-          FROM tournaments t
-          JOIN tickets ti ON t.id = ti.tournament_id
-          WHERE ti.user_id = $1;
-          `,[user_id]
+          `SELECT
+            t.id,
+            t.tournament_name,
+            t.date,
+            t.latitude,
+            t.longitude,
+            c.category_image
+          FROM
+            tournaments t
+            JOIN team_members tm ON t.id = tm.tournament_id
+            JOIN sport_category c on c.id = t.category_id
+          WHERE
+            tm.user_id = $1 AND t.status='Upcoming'`,[user_id]
       );
       
       if (result.rowCount === 0){
@@ -640,9 +632,169 @@ const getUsersTournaments = async (request, response) =>{
       }
       response.status(200).json( result.rows )
   } catch (error) {
-      response.status(500).json({ erro: error.message })
+      response.status(500).json({ error: error.message })
   }
 }
+
+/**
+ * @swagger
+ * /users/{id}/tournaments/owned:
+ *   get:
+ *     summary: Get a user's owned tournaments
+ *     description: Retrieves a list of tournaments that are owned by the specified user, including details like tournament name, date, location, and category image.
+ *     parameters:
+ *       - name: id  # Path parameter for user ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the user who owns the tournaments.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user's owned tournaments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: The ID of the tournament
+ *                     example: 1
+ *                   tournament_name:
+ *                     type: string
+ *                     description: The name of the tournament
+ *                     example: "Championship 2025"
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                     description: The date the tournament is scheduled to take place
+ *                     example: "2025-05-01"
+ *                   latitude:
+ *                     type: number
+ *                     format: float
+ *                     description: The latitude of the tournament location
+ *                     example: 40.7128
+ *                   longitude:
+ *                     type: number
+ *                     format: float
+ *                     description: The longitude of the tournament location
+ *                     example: -74.0060
+ *                   category_image:
+ *                     type: string
+ *                     description: The image associated with the tournament category
+ *                     example: "category_image_url.jpg"
+ *       404:
+ *         description: No tournaments found for the user
+ *       500:
+ *         description: Internal server error, failed to retrieve data.
+ */
+const getUsersOwnedTournaments = async (request, response) =>{
+  const user_id = request.params.id;
+
+  try {
+      const result = await pool.query(
+          `SELECT
+            t.id,
+            t.tournament_name,
+            t.date,
+            t.latitude,
+            t.longitude,
+            c.category_image
+          FROM
+            tournaments t
+            JOIN sport_category c on c.id = t.category_id
+          WHERE
+            t.owner_id = $1`,[user_id]
+      );
+      
+      if (result.rowCount === 0){
+          return response.status(404).json({ message: "Tournament not found" });
+      }
+      response.status(200).json( result.rows )
+  } catch (error) {
+      response.status(500).json({ error: error.message })
+  }
+}
+
+/**
+ * @swagger
+ * /users/{id}/tournaments/history:
+ *   get:
+ *     summary: Get a user's tournament history
+ *     description: Retrieves a list of tournaments the user has participated in, along with their position and category image, for closed tournaments.
+ *     parameters:
+ *       - name: id  # Path parameter for user ID
+ *         in: path
+ *         required: true
+ *         type: integer
+ *         description: The ID of the user.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user's tournament history
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: The ID of the tournament
+ *                     example: 1
+ *                   tournament_name:
+ *                     type: string
+ *                     description: The name of the tournament
+ *                     example: "Tournament A"
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                     description: The date the tournament took place
+ *                     example: "2025-04-01"
+ *                   position:
+ *                     type: integer
+ *                     description: The user's position in the tournament
+ *                     example: 2
+ *                   category_image:
+ *                     type: string
+ *                     description: The image associated with the tournament category
+ *                     example: "image_url.jpg"
+ *       404:
+ *         description: No tournaments found for the user
+ *       500:
+ *         description: Internal server error, failed to retrieve data.
+ */
+const getUsersTournamentsHistory = async (request, response) =>{
+  const user_id = request.params.id;
+
+  try {
+      const result = await pool.query(
+          `SELECT
+            t.id,
+            t.tournament_name,
+            t.date,
+            l."position",
+            c.category_image
+          FROM
+            tournaments t
+            JOIN team_members ti ON t.id = ti.tournament_id
+            LEFT JOIN leaderboard l on t.id = l.tournament_id
+            JOIN sport_category c on c.id = t.category_id
+          WHERE
+            ti.user_id = $1
+            AND t.status = 'Closed'`,[user_id]
+      );
+      
+      if (result.rowCount === 0){
+          return response.status(404).json({ message: "Tournament not found" });
+      }
+      response.status(200).json( result.rows )
+  } catch (error) {
+      response.status(500).json({ error: error.message })
+  }
+} 
 
 /**
  * @swagger
@@ -726,27 +878,17 @@ const getUsersTournaments = async (request, response) =>{
  *       '500':
  *         description: Internal Server Error - Something went wrong with the server.
  */
-const getTopPicks = async (request, response) => {
+const getTopPicks = async (request, response) => {  // TODO: Treba sa dohodnut ci treba vsetky values lebo to sa bude volat az potom podla id
   try {
       const userID = request.params.id;
       
       const { rows } = await pool.query(
           `SELECT
-              t.id AS tournament_id,
+              t.id,
               t.tournament_name,
-              t.category_id,
-              t.location_name,
+              t.date,
               t.latitude,
               t.longitude,
-              t.level,
-              t.max_team_size,
-              t.game_setting,
-              t.entry_fee,
-              t.prize_description,
-              t.is_public,
-              t.additional_info,
-              t.status,
-              t.date,
               sc.category_image
           FROM
               tournaments t
@@ -772,7 +914,101 @@ const getTopPicks = async (request, response) => {
       // Handle errors and send a 500 response
       response.status(500).json({ error: error.message });
   }
-};
+}; 
+
+
+// Tickets
+
+/**
+ * @swagger
+ * /users/{id}/tickets:
+ *   get:
+ *     summary: Get all tickets for a specific user
+ *     description: Retrieves all tickets that belong to a specific user.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the user whose tickets you want to retrieve
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the user's tickets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: The ID of the ticket
+ *                   user_id:
+ *                     type: integer
+ *                     description: The ID of the user who purchased the ticket
+ *                   tournament_id:
+ *                     type: integer
+ *                     description: The ID of the tournament for which the ticket is issued
+ *                   ticket_hash:
+ *                     type: string
+ *                     description: A unique identifier (hash) for the ticket
+ *       404:
+ *         description: No tickets found for the user
+ *       500:
+ *         description: Internal server error
+ */
+const getUserTickets = async (request, response) =>{
+  const user_id = request.params.id;
+
+  try {
+      const result = await pool.query(
+          `SELECT
+              tm.id,
+              t.date,
+              sc.category_image
+          FROM
+              team_members tm
+              JOIN tournaments t ON tm.tournament_id = t.id
+              JOIN sport_category sc ON t.category_id = sc.id
+          WHERE
+              user_id = $1`,[user_id]
+      );
+      
+      if (result.rowCount === 0){
+          return response.status(404).json({ message: "Tickets not found" });
+      }
+      response.status(200).json( result.rows )
+  } catch (error) {
+      response.status(500).json({ error: error.message })
+  }
+}  
+
+// const getUserQR = async (request, response) => {
+//   const user_id = request.params.id;
+//   const tournament_id = request.params.tournament_id;
+
+//   try {
+//     const result = await pool.query(
+//         `SELECT
+//             tm.id,
+//             t.date,
+//             sc.category_image
+//         FROM
+//             team_members tm
+//             JOIN tournaments t ON tm.tournament_id = t.id
+//             JOIN sport_category sc ON t.category_id = sc.id
+//         WHERE
+//             user_id = $1`,[user_id]
+//     );
+
+
+
+//   }
+
+
+// }
 
 module.exports = {
     getUsers,
@@ -784,5 +1020,8 @@ module.exports = {
     editProfile,
     editPreferences,
     getUsersTournaments,
-    getTopPicks
+    getUsersTournamentsHistory,
+    getTopPicks,
+    getUserTickets,
+    getUsersOwnedTournaments
 };
