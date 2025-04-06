@@ -262,17 +262,36 @@ const loginUser = async (request, response) => {
  *         description: Internal server error.
  */
 const changePassword = async (request, response) => {
+  
+  const userId = request.user.userId; // from token
+  const { newPassword, oldPassword } = request.body;
+
   try {
-    const { id, newPassword } = request.body;
+
+    const { rows } = await pool.query(
+      `SELECT password FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (rows.length === 0){
+      return response.status(404).json({ message: 'User not found' });
+    }
+
+    const currentHashedPassword = rows[0].password;
+
+    const isMatch = await bcrypt.compare(oldPassword, currentHashedPassword);
+    if (!isMatch) {
+      return response.status(401).json({ message: 'Old password is incorrect' });
+    }
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    // Update the password in the database
     await pool.query(
-      `UPDATE users SET password = $1 WHERE id = $2;`,
-      [hashedPassword, id]
+      `UPDATE users SET password = $1 WHERE id = $2`,
+      [hashedPassword, userId]
     );
+
 
     response.status(200).json({ message: "Password changed successfully" });
   } catch (error) {

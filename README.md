@@ -214,8 +214,7 @@ If you've done everything correctly, you should see this after entering `http://
 install `npm install -g nodemon` to autorefresh server and start server with `nodemon index.js` 
 
 ## Tokenization
-- `npm install jsonwebtoken dotenv`
-- create `.env` file
+- `npm install jsonwebtoken`
 
 ## Swagger
 Swagger is a documentation making tool, if you want to use that, here is how it works:
