@@ -6,9 +6,9 @@ const port = 3000
 
 const checkUserIdentity = require('./middleware/checkUserIdentity')
 const verifyToken = require('./middleware/authMiddleware');
-app.get('/protected', verifyToken, (request, response) => {
-  response.json({ message: `Hello user ${request.user.userId}` });
-});
+// app.get('/protected', verifyToken, (request, response) => {
+//   response.json({ message: `Hello user ${request.user.userId}` });
+// });
 
 // Import other modules
 const dbUser = require('./userQueries')
@@ -54,9 +54,6 @@ app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
-// For each protected endpoint verify token
-app.use('/protected', verifyToken);
-//TODO: Pridat mazanie je to v podmienkach
 //// ## GETs ##
 // Users
 app.get('/users', verifyToken, dbUser.getUsers); //?

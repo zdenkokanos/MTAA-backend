@@ -314,7 +314,8 @@ const getTournamentInfo = async (request, response) => {
  *         description: Internal server error.
  */
 const createTournament = async (request, response) => {
-    const { owner_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status, date } = request.body;
+    const { tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status, date } = request.body;
+    const owner_id = request.user.userId; // from token
 
     try {
         const { rows } = await pool.query(
