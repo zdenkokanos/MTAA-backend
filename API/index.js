@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
 
+const checkUserIdentity = require('./middleware/checkUserIdentity')
 const verifyToken = require('./middleware/authMiddleware');
 app.get('/protected', verifyToken, (request, response) => {
   response.json({ message: `Hello user ${request.user.userId}` });
@@ -58,15 +59,15 @@ app.use('/protected', verifyToken);
 //TODO: Pridat mazanie je to v podmienkach
 //// ## GETs ##
 // Users
-app.get('/protected/users', dbUser.getUsers);
-app.get('/users/:id/info', dbUser.getUserInfo);
-app.get('/users/:email/id', dbUser.getUserId);
-app.get('/users/:id/tournaments', dbUser.getUsersTournaments);
-app.get('/users/:id/tournaments/history', dbUser.getUsersTournamentsHistory);
-app.get('/users/:id/tournaments/owned', dbUser.getUsersOwnedTournaments);
+app.get('/users', verifyToken, dbUser.getUsers); //?
+app.get('/users/:id/info', verifyToken, checkUserIdentity, dbUser.getUserInfo);
+app.get('/users/:email/id', dbUser.getUserId); //?
+app.get('/users/:id/tournaments', verifyToken, checkUserIdentity, dbUser.getUsersTournaments);
+app.get('/users/:id/tournaments/history', verifyToken, checkUserIdentity, dbUser.getUsersTournamentsHistory);
+app.get('/users/:id/tournaments/owned', verifyToken, checkUserIdentity, dbUser.getUsersOwnedTournaments);
 app.get('/users/:id/top-picks', dbUser.getTopPicks);
-app.get('/users/:id/tickets', dbUser.getUserTickets);
-app.get('/users/:id/tickets/:ticket_id/qr', dbUser.getTicketQR);
+app.get('/users/:id/tickets', verifyToken, checkUserIdentity, dbUser.getUserTickets);
+app.get('/users/:id/tickets/:ticket_id/qr', verifyToken, checkUserIdentity, dbUser.getTicketQR);
 // Tournaments
 app.get('/tournaments', dbTournament.getTournaments);
 app.get('/tournaments/:id/info', dbTournament.getTournamentInfo);
@@ -81,24 +82,24 @@ app.get('/tournaments/:id/teams/count', dbTournament.getTeamCount);
 app.post('/auth/register', dbAuth.insertUser);
 app.post('/auth/login', dbAuth.login); 
 //Tournaments
-app.post('/tournaments', dbTournament.createTournament);
-app.post('/tournaments/:id/register', dbTournament.addTeamToTournament);
-app.post('/tournaments/:id/join_team', dbTournament.joinTeamAtTournament);
-app.post('/tournaments/leaderboard/add', dbTournament.addRecordToLeaderboard);
-app.post('/tournaments/:id/check-tickets', dbTournament.checkTickets);
+app.post('/tournaments', verifyToken, dbTournament.createTournament);
+app.post('/tournaments/:id/register', verifyToken, dbTournament.addTeamToTournament);
+app.post('/tournaments/:id/join_team', verifyToken, dbTournament.joinTeamAtTournament);
+app.post('/tournaments/leaderboard/add', verifyToken, dbTournament.addRecordToLeaderboard);
+app.post('/tournaments/:id/check-tickets', verifyToken, dbTournament.checkTickets);
 
 //// ## PUTs ##
 // Users
-app.put('/users/changePassword', dbUser.changePassword);
-app.put('/users/editProfile', dbUser.editProfile);
-app.put('/users/editPreferences', dbUser.editPreferences);
+app.put('/users/changePassword', verifyToken, dbUser.changePassword); //!
+app.put('/users/editProfile', verifyToken, dbUser.editProfile); //!
+app.put('/users/editPreferences', verifyToken, dbUser.editPreferences); //!
 // Tournaments
-app.put('/tournaments/edit', dbTournament.editTournament);
-app.put('/tournaments/:id/start', dbTournament.startTournament);
-app.put('/tournaments/:id/stop', dbTournament.stopTournament);
+app.put('/tournaments/edit', verifyToken, dbTournament.editTournament);
+app.put('/tournaments/:id/start', verifyToken, dbTournament.startTournament);
+app.put('/tournaments/:id/stop', verifyToken, dbTournament.stopTournament);
 
 //// ## DELETEs ##
-app.delete('/tournaments/leaderboard/remove', dbTournament.removeFromLeaderboard);
+app.delete('/tournaments/leaderboard/remove', verifyToken, dbTournament.removeFromLeaderboard);
 
 // Start the server and listen on specified port
 app.listen(port, () => {
