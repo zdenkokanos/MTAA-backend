@@ -27,7 +27,7 @@ const pool = require('./pooling'); // Import the database pool
  *                     type: string
  *                     example: "football.png"
  *       '404':
- *         description: No sport categories found.
+ *         description: Sport categories not found
  *       '500':
  *         description: Internal Server Error - Something went wrong with the server.
  */

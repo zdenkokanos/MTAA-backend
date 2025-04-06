@@ -3,7 +3,7 @@ const crypto = require('crypto');
 
 /**
  * @swagger
- * /tournaments:
+ * /tournaments: 
  *   get:
  *     summary: Get all tournaments with sport category filter excluding user’s assigned tournaments
  *     description: Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of.
@@ -58,7 +58,7 @@ const crypto = require('crypto');
  *       500:
  *         description: Internal server error.
  */
-const getTournaments = async (request, response) => { //TODO: Nestaci len id a obrazok datum a to co zobrazime? zbytocne tahame vela info
+const getTournaments = async (request, response) => {
     try {
         const {category_id, user_id} = request.query;
         const { rows } = await pool.query(
@@ -93,7 +93,7 @@ const getTournaments = async (request, response) => { //TODO: Nestaci len id a o
 
 /**
  * @swagger
- * /tournaments/{id}/info:
+ * /tournaments/{id}/info: 
  *   get:
  *     summary: Get tournament info by ID
  *     description: Returns detailed information about a specific tournament based on its ID.
@@ -116,15 +116,9 @@ const getTournaments = async (request, response) => { //TODO: Nestaci len id a o
  *                 id:
  *                   type: integer
  *                   example: 1
- *                 owner_id:
- *                   type: integer
- *                   example: 5
  *                 tournament_name:
  *                   type: string
  *                   example: Summer Basketball Championship
- *                 category_id:
- *                   type: integer
- *                   example: 2
  *                 location_name:
  *                   type: string
  *                   example: Los Angeles Sports Arena
@@ -170,14 +164,6 @@ const getTournaments = async (request, response) => { //TODO: Nestaci len id a o
  *                   example: Basketball
  *       404:
  *         description: Tournament not found.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Tournament not found
  *       500:
  *         description: Internal server error.
  */
@@ -434,8 +420,6 @@ const createTournament = async (request, response) => {
  *                 message:
  *                   type: string
  *                   example: Tournament updated successfully
- *       400:
- *         description: Bad request, missing required fields.
  *       404:
  *         description: Tournament not found.
  *       500:
@@ -445,7 +429,7 @@ const editTournament = async (request, response) => {
     const { tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status } = request.body;
 
     try {
-        await pool.query(
+        const { rowCount } = await pool.query(
         `UPDATE tournaments 
         SET
             tournament_name = $2,
@@ -465,6 +449,10 @@ const editTournament = async (request, response) => {
             `, [tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status]
         );
         
+        if (rowCount === 0) {
+            return response.status(404).json({ message: "Tournament not found." });
+        }
+
         response.status(200).json({ message: "Tournament updated successfully" });
         
     } catch (error) {
@@ -497,8 +485,6 @@ const editTournament = async (request, response) => {
  *                 message:
  *                   type: string
  *                   example: Tournament started successfully
- *       400:
- *         description: Bad request, missing or invalid tournament ID.
  *       404:
  *         description: Tournament not found.
  *       500:
@@ -550,8 +536,6 @@ const startTournament = async (request, response) => {
  *                 message:
  *                   type: string
  *                   example: Tournament stopped successfully
- *       400:
- *         description: Bad request, missing or invalid tournament ID.
  *       404:
  *         description: Tournament not found.
  *       500:
@@ -627,13 +611,17 @@ const addRecordToLeaderboard = async (request, response) => {
     const { tournament_id, team_id, position} = request.body;
 
     try {
-        await pool.query(
+        const result = await pool.query(
             `INSERT INTO
                 leaderboard (tournament_id, team_id, position) 
             VALUES
                 ($1, $2, $3)
             `, [tournament_id, team_id, position]
         );
+
+        if (result.rowCount === 0) {
+            return response.status(400).json({ message: "Invalid input, missing required fields or invalid data" });
+        }
 
         response.status(200).json({ message: "Record added to leaderboard" })
     } catch (error) {
@@ -728,20 +716,25 @@ const getLeaderboardByTournament = async (request, response) =>{
  *                 example: 5
  *     responses:
  *       200:
- *         description: Successfully removed the team from the leaderboard
+ *         description: Record removed from leaderboard
  *       404:
- *         description: Leaderboard record not found for the specified tournament and team
+ *         description: Leaderboard record not found
  *       500:
  *         description: Internal server error, failed to remove record.
  */
 const removeFromLeaderboard = async (request, response) => {
     const { tournament_id, team_id } = request.body;
     try {
-        await pool.query(
+        const result = await pool.query(
             `DELETE FROM leaderboard
                 WHERE tournament_id = $1 AND team_id = $2`,
             [tournament_id, team_id]
         );
+
+        if (result.rowCount === 0) {
+            return response.status(404).json({ message: "Leaderboard record not found." });
+        }
+
         response.status(200).json({ message: "Record removed from leaderboard" });
     } catch (error) {
         response.status(500).json({ error: error.message });
@@ -1030,22 +1023,33 @@ const getEnrolledTeams = async (request, response) => {
  *           properties:
  *             ticket:
  *               type: string
- *               description: "The ticket code to check."
+ *               example: 9HFBDAS24
  *     responses:
  *       200:
  *         description: "Ticket found"
- *         schema:
- *           type: object
- *           properties:
- *             id:
- *               type: integer
- *               description: "ID of the team member"
- *             name:
- *               type: string
- *               description: "Name of the team member"
- *             role:
- *               type: string
- *               description: "Role of the team member in the tournament"
+*         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 11
+ *                 user_id:
+ *                   type: integer
+ *                   example: 60
+ *                 team_id:
+ *                   type: integer
+ *                   example: 14
+ *                 tournament_id:
+ *                   type: integer
+ *                   example: 62
+ *                 name:
+ *                   type: string
+ *                   description: "Name of the team member"
+ *                 ticket:
+ *                   type: string
+ *                   example: 9HFBDAS24
  *       404:
  *         description: "Ticket not found"
  *       500:
@@ -1077,7 +1081,7 @@ const checkTickets = async (request, response) => {
 
 /**
  * @swagger
- * /tournaments/{id}/teams/count:
+ * /tournaments/{id}/teams/count: 
  *   get:
  *     summary: Get the count of teams enrolled in a tournament
  *     description: Retrieves the total number of teams that are enrolled in a specific tournament.
