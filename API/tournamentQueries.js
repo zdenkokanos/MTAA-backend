@@ -58,7 +58,7 @@ const crypto = require('crypto');
  *       500:
  *         description: Internal server error.
  */
-const getTournaments = async (request, response) => { //TODO: Nestaci len id a obrazok datum a to co zobrazime? zbytocne tahame vela info
+const getTournaments = async (request, response) => {
     try {
         const {category_id, user_id} = request.query;
         const { rows } = await pool.query(

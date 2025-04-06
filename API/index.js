@@ -4,6 +4,9 @@ const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
 
+// Import the multer configuration for file handling
+const upload = require('./multerConfig'); 
+
 const checkUserIdentity = require('./middleware/checkUserIdentity')
 const verifyToken = require('./middleware/authMiddleware');
 // app.get('/protected', verifyToken, (request, response) => {
@@ -76,8 +79,9 @@ app.get('/tournaments/:id/teams/count', dbTournament.getTeamCount);
 
 //// ## POSTs ##
 // Users
-app.post('/auth/register', dbAuth.insertUser);
+app.post('/auth/register', upload.single('image'), dbAuth.insertUser);
 app.post('/auth/login', dbAuth.login); 
+app.post('/users/check-email', dbUser.checkEmailExists);
 //Tournaments
 app.post('/tournaments', verifyToken, dbTournament.createTournament);
 app.post('/tournaments/:id/register', verifyToken, dbTournament.addTeamToTournament);
@@ -87,7 +91,7 @@ app.post('/tournaments/:id/check-tickets', verifyToken, dbTournament.checkTicket
 
 //// ## PUTs ##
 // Users
-app.put('/users/changePassword', verifyToken, dbUser.changePassword); //!
+app.put('/users/changePassword', verifyToken, dbUser.changePassword);
 app.put('/users/editProfile', verifyToken, dbUser.editProfile); //!
 app.put('/users/editPreferences', verifyToken, dbUser.editPreferences); //!
 // Tournaments
