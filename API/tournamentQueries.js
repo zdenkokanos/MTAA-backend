@@ -774,7 +774,6 @@ const generateCode = (byte_length) => {
  *             type: object
  *             required:
  *               - team_name  # Required parameter for team name
- *               - user_id  # Required parameter for user ID
  *             properties:
  *               team_name:
  *                 type: string
@@ -809,7 +808,8 @@ const generateCode = (byte_length) => {
  *         description: Internal server error, failed to register team.
  */
 const addTeamToTournament = async (request, response) => {
-    const { team_name, user_id } = request.body;
+    const { team_name } = request.body;
+    const user_id = request.user.userId; // from token
     const tournament_id = request.params.id;
     const code = generateCode(4);
     const ticket_hash = generateCode(6);
@@ -862,7 +862,6 @@ const addTeamToTournament = async (request, response) => {
  *           schema:
  *             type: object
  *             required:
- *               - user_id  # Required parameter for user ID
  *               - code     # Required parameter for team code
  *             properties:
  *               user_id:
@@ -892,7 +891,8 @@ const addTeamToTournament = async (request, response) => {
  *         description: Internal server error, failed to add user to the team.
  */
 const joinTeamAtTournament = async (request, response) => {
-    const { user_id, code } = request.body;
+    const { code } = request.body;
+    const user_id = request.user.userId; // from token
     const tournament_id = request.params.id;
     const ticket_hash = generateCode(6);
 
@@ -971,6 +971,10 @@ const joinTeamAtTournament = async (request, response) => {
  *               items:
  *                 type: object
  *                 properties:
+ *                     id:
+    *                  type: integer
+    *                  description: The ID of the team
+    *                  example: 1
  *                   team_name:
  *                     type: string
  *                     description: The name of the team
@@ -990,6 +994,7 @@ const getEnrolledTeams = async (request, response) => {
     try {
         const result = await pool.query(
             `SELECT
+                t.id,
                 t.team_name,
                 COUNT(*) AS number_of_members
             FROM
@@ -997,7 +1002,7 @@ const getEnrolledTeams = async (request, response) => {
                 JOIN team_members tm ON t.id = tm.team_id
             WHERE
                 t.tournament_id = $1
-            GROUP BY t.team_name`, [tournament_id]
+            GROUP BY t.team_name, t.id`, [tournament_id]
         );
 
         if (result.rowCount === 0) {
