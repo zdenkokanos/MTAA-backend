@@ -1,5 +1,6 @@
 const pool = require('./pooling'); // Import the database pool
 const bcrypt = require('bcrypt');
+const path = require('path');
 const saltRounds = 10;
 const JWT_SECRET = 'fbce145f629cbac3bf16fd7fe6d28cb96246396da7f20ca58293f397a04decab7746cd06afe308f71166dba2977eb9d6f1c059a7eee285f27060b408d36a6948';  // For JWT tokenization, it should typically be stored in an environment variable for security reasons. 
 // However, in this example, it is hardcoded to make it easier for supervisors to test and verify the functionality during development.
@@ -97,11 +98,14 @@ const jwt = require('jsonwebtoken')
  */
 const insertUser = async (request, response) => {
     try {
-        const { first_name, last_name, email, password, preferred_location, preferred_longitude, preferred_latitude, preferences, image_path } = request.body;
-  
+        // Extracting individual fields
+        const { first_name, last_name, email, password, preferred_location, preferred_longitude, preferred_latitude, preferences } = request.body;
+        const image_path = request.file ? path.basename(request.file.path) : null;
+
         // Hash the password before saving
-        const hashedPassword = await bcrypt.hash(password, saltRounds); 
-    
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Insert user data into the database
         const { rows } = await pool.query(
             `INSERT INTO
             users (
@@ -120,28 +124,33 @@ const insertUser = async (request, response) => {
             id;`,
             [first_name, last_name, email, hashedPassword, preferred_location, preferred_longitude, preferred_latitude, image_path]
         );
-    
+
         const newUser = rows[0];
         const userId = rows[0].id;
-        
+
+        // Insert user preferences if they exist
         if (Array.isArray(preferences) && preferences.length > 0) {
-            const preferenceQueries = preferences.map(sportId => {  // map loops over each item in array
-            return pool.query(
-                `INSERT INTO preferences (user_id, sport_id) VALUES ($1, $2);`,
-                [userId, sportId]
-            );
+            const preferenceQueries = preferences.map(sportId => {
+                return pool.query(
+                    `INSERT INTO preferences (user_id, sport_id) VALUES ($1, $2);`,
+                    [userId, sportId]
+                );
             });
 
-            
             await Promise.all(preferenceQueries);
-            
-            //generate token
+
+            // Generate JWT token
             const token = jwt.sign({ userId: newUser.id }, JWT_SECRET);
 
             response.status(201).json({ token, user: newUser });
+        } else {
+            // If there are no preferences, just return user data
+            const token = jwt.sign({ userId: newUser.id }, JWT_SECRET);
+            response.status(201).json({ token, user: newUser });
         }
+
     } catch (error) {
-      response.status(500).json({ error: error.message });
+        response.status(500).json({ error: error.message });
     }
 };
 

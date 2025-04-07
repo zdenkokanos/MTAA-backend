@@ -222,7 +222,7 @@ const loginUser = async (request, response) => {
  * /users/changePassword:
  *   put:
  *     summary: Change user password
- *     description: Updates the password for a specific user based on their ID.
+ *     description: Updates the password for a specific user based on their ID, after validating the old password.
  *     requestBody:
  *       required: true
  *       content:
@@ -268,7 +268,7 @@ const changePassword = async (request, response) => {
     );
 
     if (rows.length === 0){
-      return response.status(404).json({ message: 'User not found' });
+      return response.status(404).json({ message: 'User not found, invalid user ID.' });
     }
 
     const currentHashedPassword = rows[0].password;
@@ -346,13 +346,14 @@ const changePassword = async (request, response) => {
  */
 const editProfile = async (request, response) => {
   try {
-    const { id, first_name, last_name, age, gender } = request.body;
+    const { first_name, last_name, age, gender } = request.body;
+    const userId = request.user.userId; // from token
 
     await pool.query(
       `UPDATE users 
        SET first_name = $1, last_name = $2, age = $3, gender = $4
        WHERE id = $5`,
-      [first_name, last_name, age, gender, id]
+      [first_name, last_name, age, gender, userId]
     );
 
     response.status(200).json({ message: "Profile updated successfully" });
@@ -412,13 +413,14 @@ const editProfile = async (request, response) => {
  */
 const editPreferences = async (request, response) => {
   try {
-    const { id, preferred_location, preferred_longitude, preferred_latitude } = request.body;
+    const { preferred_location, preferred_longitude, preferred_latitude } = request.body;
+    const userId = request.user.userId; // from token
 
     await pool.query(
       `UPDATE users 
        SET preferred_location = $1, preferred_longitude = $2, preferred_latitude = $3
        WHERE id = $4`,
-      [preferred_location, preferred_longitude, preferred_latitude, id]
+      [preferred_location, preferred_longitude, preferred_latitude, userId]
     );
 
     response.status(200).json({ message: "Profile updated successfully" });
@@ -897,6 +899,54 @@ const getTicketQR = async (request, response) => {
 }
 
 
+/**
+ * @swagger
+ * /users/check-email:
+ *   get:
+ *     summary: Check if an email already exists in the system
+ *     description: This endpoint checks if the provided email address is already registered in the system.
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: email
+ *         description: The email address to check
+ *     responses:
+ *       200:
+ *         description: Email exists or is available
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exists:
+ *                   type: boolean
+ *                   description: Indicates whether the email is already registered
+ *                   example: true
+ *       500:
+ *         description: Internal Server Error - something went wrong with the server
+ */
+const checkEmailExists = async (request, response) => {
+  const { email } = request.body;
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT id FROM users WHERE email = $1;`, [email]
+    );
+
+    if (rows.length > 0) {
+      return response.status(200).json({ exists: true });
+    } else {
+      return response.status(200).json({ exists: false });
+    }
+  } catch (error) {
+    response.status(500).json({ error: error.message });
+  }
+}
+
+
 module.exports = {
     getUsers,
     getUserInfo,
@@ -910,5 +960,6 @@ module.exports = {
     getTopPicks,
     getUserTickets,
     getUsersOwnedTournaments,
-    getTicketQR
+    getTicketQR,
+    checkEmailExists
 };
