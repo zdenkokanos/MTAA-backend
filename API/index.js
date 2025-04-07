@@ -6,9 +6,6 @@ const port = 3000
 
 const checkUserIdentity = require('./middleware/checkUserIdentity')
 const verifyToken = require('./middleware/authMiddleware');
-app.get('/protected', verifyToken, (request, response) => {
-  response.json({ message: `Hello user ${request.user.userId}` });
-});
 
 // Import other modules
 const dbUser = require('./userQueries')
@@ -54,9 +51,36 @@ app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
+/**
+* @swagger
+* paths:
+*   /protected:
+*     get:
+*       summary: Access protected resource
+*       description: Returns a greeting message with the user's ID if a valid JWT token is provided.
+*       security:
+*         - bearerAuth: []
+*       responses:
+*         '200':
+*           description: Successfully authorized
+*           content:
+*             application/json:
+*               schema:
+*                 type: object
+*                 properties:
+*                   message:
+*                     type: string
+*                     example: Hello user 123
+*         '500':
+*           description: Cannot read properties of undefined
+* 
+*/
+app.get('/protected', verifyToken, (request, response) => {
+  response.json({ message: `Hello user ${request.user.userId}` });
+});
+
 // For each protected endpoint verify token
 app.use('/protected', verifyToken);
-//TODO: Pridat mazanie je to v podmienkach
 //// ## GETs ##
 // Users
 app.get('/users', verifyToken, dbUser.getUsers); //?
