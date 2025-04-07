@@ -30,19 +30,13 @@ const JWT_SECRET = 'jwt_secret';  // For JWT tokenization, it should typically b
 *                    last_name:
 *                      type: string
 *                      example: Smith
-*                    gender:
-*                      type: string
-*                      example: Female
-*                    age:
-*                      type: integer
-*                      example: 28
 *                    email:
 *                      type: string
 *                      example: jane.smith@email.com
 *                    password:
 *                      type: string
 *                      description: Hashed user password
-*                      example: hashed_password2
+*                      example: $2b$10$NHCkUIUr7M35glDvYIyNj.qbvOSQ11akitOFrYGP6mhhzhIqS52pe
 *                    preferred_location:
 *                      type: string
 *                      example: Los Angeles
@@ -58,6 +52,11 @@ const JWT_SECRET = 'jwt_secret';  // For JWT tokenization, it should typically b
 *                      type: string
 *                      format: date-time
 *                      example: "2025-03-29T15:42:37.099Z"
+*                    image_path:
+*                      type: string
+*                      example: imgs/2.png
+*        '404':
+*          description: User not found
 *        '500':
 *          description: Internal server error
  */
@@ -100,12 +99,6 @@ const getUsers = (request, response) => {
  *                 last_name:
  *                   type: string
  *                   example: Smith
- *                 gender:
- *                   type: string
- *                   example: Female
- *                 age:
- *                   type: integer
- *                   example: 28
  *                 email:
  *                   type: string
  *                   example: jane.smith@gmail.com
@@ -119,6 +112,9 @@ const getUsers = (request, response) => {
  *                   type: string
  *                   format: date-time
  *                   example: 2025-03-29T15:42:37.099Z
+ *                 image_path:
+ *                   type: string
+ *                   example: user/images/img.png
  *       404:
  *         description: User not found
  *       500:
@@ -155,7 +151,7 @@ const getUserInfo = async (request, response) => {
 
 /**
  * @swagger
- * /users/{email}/id:
+ * /users/:email/id:
  *   get:
  *     summary: Retrieve user ID by email
  *     description: Returns the user ID based on their unique email address.
@@ -233,23 +229,14 @@ const loginUser = async (request, response) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - id
- *               - oldPassword
- *               - newPassword
  *             properties:
- *               id:
- *                 type: integer
- *                 description: Unique user ID (will be extracted from the authentication token).
- *                 example: 1
- *               oldPassword:
- *                 type: string
- *                 description: The current password of the user to verify before updating.
- *                 example: currentPassword123
  *               newPassword:
  *                 type: string
  *                 description: The new plain password (will be hashed by the server).
  *                 example: newPlainPassword123
+ *               oldPassword:
+ *                 type: string
+ *                 example: oldPlainPassword123
  *     responses:
  *       200:
  *         description: Password changed successfully.
@@ -261,10 +248,10 @@ const loginUser = async (request, response) => {
  *                 message:
  *                   type: string
  *                   example: Password changed successfully
- *       401:
- *         description: Unauthorized, incorrect old password.
+ *       400:
+ *         description: Old password is incorrect
  *       404:
- *         description: User not found, invalid user ID.
+ *         description: User not found
  *       500:
  *         description: Internal server error.
  */
@@ -288,7 +275,7 @@ const changePassword = async (request, response) => {
 
     const isMatch = await bcrypt.compare(oldPassword, currentHashedPassword);
     if (!isMatch) {
-      return response.status(401).json({ message: 'Unauthorized, incorrect old password.' });
+      return response.status(400).json({ message: 'Old password is incorrect' });
     }
 
     // Hash the new password
@@ -308,7 +295,7 @@ const changePassword = async (request, response) => {
 
 /**
  * @swagger
- * /users/profile:
+ * /users/editProfile:
  *   put:
  *     summary: Edit user profile
  *     description: Updates the user's profile information based on their ID.
@@ -353,7 +340,7 @@ const changePassword = async (request, response) => {
  *                   type: string
  *                   example: Profile updated successfully
  *       400:
- *         description: Bad request, missing required fields.
+ *         description: Bad request
  *       500:
  *         description: Internal server error.
  */
@@ -444,7 +431,7 @@ const editPreferences = async (request, response) => {
 
 /**
  * @swagger
- * /users/{id}/tournaments:
+ * /users/:id/tournaments:
  *   get:
  *     summary: Get all tournaments a user is registered for
  *     description: Retrieves all tournaments where a specific user is registered.
@@ -467,51 +454,26 @@ const editPreferences = async (request, response) => {
  *                 properties:
  *                   id:
  *                     type: integer
- *                     description: The ID of the tournament
+ *                     example: 11
  *                   tournament_name:
  *                     type: string
- *                     description: The name of the tournament
- *                   category_id:
- *                     type: integer
- *                     description: The ID of the sport category
- *                   location_name:
- *                     type: string
- *                     description: The name of the tournament location
+ *                     example: Rugby Battle Cup
+ *                   date:
+ *                     type: date
+ *                     example: 2025-10-19T22:00:00.000Z
  *                   latitude:
  *                     type: number
  *                     format: float
- *                     description: The latitude of the tournament location
+ *                     example: 51.5074
  *                   longitude:
  *                     type: number
  *                     format: float
- *                     description: The longitude of the tournament location
- *                   level:
+ *                     example: -0.1278
+ *                   category_image:
  *                     type: string
- *                     description: The level of the tournament (e.g., "Amateur", "Professional")
- *                   max_team_size:
- *                     type: integer
- *                     description: The maximum size of a team
- *                   game_setting:
- *                     type: string
- *                     description: The setting of the game (e.g., "Indoor", "Outdoor")
- *                   entry_fee:
- *                     type: number
- *                     format: float
- *                     description: The entry fee for the tournament
- *                   prize_description:
- *                     type: string
- *                     description: The prize for the tournament
- *                   is_public:
- *                     type: boolean
- *                     description: Whether the tournament is public or not
- *                   additional_info:
- *                     type: string
- *                     description: Additional information about the tournament
- *                   status:
- *                     type: string
- *                     description: The status of the tournament (e.g., "Upcoming", "Ongoing", "Closed")
+ *                     example: rugby.png
  *       404:
- *         description: No tournaments found for the user
+ *         description: Tournament not found
  *       500:
  *         description: Internal server error
  */
@@ -549,7 +511,7 @@ const getUsersTournaments = async (request, response) =>{
  * /users/{id}/tournaments/owned:
  *   get:
  *     summary: Get a user's owned tournaments
- *     description: Retrieves a list of tournaments that are owned by the specified user, including details like tournament name, date, location, and category image.
+ *     description: Retrieves a list of tournaments that are owned by the specified user.
  *     parameters:
  *       - name: id  # Path parameter for user ID
  *         in: path
@@ -594,7 +556,7 @@ const getUsersTournaments = async (request, response) =>{
  *                     description: The image associated with the tournament category
  *                     example: "category_image_url.jpg"
  *       404:
- *         description: No tournaments found for the user
+ *         description: Tournament not found
  *       500:
  *         description: Internal server error, failed to retrieve data.
  */
@@ -628,7 +590,7 @@ const getUsersOwnedTournaments = async (request, response) =>{
 
 /**
  * @swagger
- * /users/{id}/tournaments/history:
+ * /users/{id}/tournaments/history: 
  *   get:
  *     summary: Get a user's tournament history
  *     description: Retrieves a list of tournaments the user has participated in, along with their position and category image, for closed tournaments.
@@ -670,7 +632,7 @@ const getUsersOwnedTournaments = async (request, response) =>{
  *                     description: The image associated with the tournament category
  *                     example: "image_url.jpg"
  *       404:
- *         description: No tournaments found for the user
+ *         description: Tournament not found
  *       500:
  *         description: Internal server error, failed to retrieve data.
  */
@@ -709,7 +671,7 @@ const getUsersTournamentsHistory = async (request, response) =>{
  * /users/{id}/top-picks:
  *   get:
  *     summary: Retrieve top upcoming tournaments based on user preferences
- *     description: Returns up to 5 upcoming public tournaments that match the user's sport preferences and in which the user is not already participating.
+ *     description: Returns up to 5 upcoming public tournaments that match the user's sport preferences and in which the user is not already participating in.
  *     operationId: getTopPicks
  *     parameters:
  *       - name: id
@@ -803,7 +765,7 @@ const getTopPicks = async (request, response) => {
 
 /**
  * @swagger
- * /users/{id}/tickets:
+ * /users/{id}/tickets: 
  *   get:
  *     summary: Get all tickets for a specific user
  *     description: Retrieves all tickets that belong to a specific user.
@@ -826,18 +788,16 @@ const getTopPicks = async (request, response) => {
  *                 properties:
  *                   id:
  *                     type: integer
- *                     description: The ID of the ticket
- *                   user_id:
- *                     type: integer
- *                     description: The ID of the user who purchased the ticket
- *                   tournament_id:
- *                     type: integer
- *                     description: The ID of the tournament for which the ticket is issued
- *                   ticket_hash:
+ *                     example: 11
+ *                   date:
  *                     type: string
- *                     description: A unique identifier (hash) for the ticket
+ *                     format: date-time
+ *                     example: 2025-03-29T15:42:37.099Z
+ *                   category_image:
+ *                     type: string
+ *                     example: rugby.png
  *       404:
- *         description: No tickets found for the user
+ *         description: Tickets not found
  *       500:
  *         description: Internal server error
  */
@@ -869,7 +829,7 @@ const getUserTickets = async (request, response) =>{
 
 /**
  * @swagger
- * /users/{id}/tickets/{ticket_id}/qr:
+ * /users/{id}/tickets/{ticket_id}/qr: 
  *   get:
  *     summary: Get ticket details for QR generation
  *     description: Retrieves ticket information, including the associated team name and code, based on the provided ticket ID for a specific user.

@@ -9,6 +9,7 @@ const upload = require('./multerConfig');
 
 const checkUserIdentity = require('./middleware/checkUserIdentity')
 const verifyToken = require('./middleware/authMiddleware');
+
 // app.get('/protected', verifyToken, (request, response) => {
 //   response.json({ message: `Hello user ${request.user.userId}` });
 // });

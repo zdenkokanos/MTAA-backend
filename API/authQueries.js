@@ -12,8 +12,8 @@ const jwt = require('jsonwebtoken')
  * @swagger
  * /auth/register:
  *   post:
- *     summary: Insert a new user into the database
- *     description: Adds a new user and returns their unique ID.
+ *     summary: Register a new user
+ *     description: Registers a new user, stores their preferences, and returns a JWT token along with the user ID.
  *     requestBody:
  *       required: true
  *       content:
@@ -45,11 +45,12 @@ const jwt = require('jsonwebtoken')
  *                 example: 28
  *               email:
  *                 type: string
+ *                 format: email
  *                 example: jane.smith@email.com
  *               password:
  *                 type: string
- *                 description: Hashed user password
- *                 example: hashed_password2
+ *                 description: User's plain text password (will be hashed before saving)
+ *                 example: myStrongPassword123
  *               preferred_location:
  *                 type: string
  *                 example: Los Angeles
@@ -65,24 +66,35 @@ const jwt = require('jsonwebtoken')
  *                 type: array
  *                 items:
  *                   type: integer
- *                   example: 1
  *                 description: List of sport IDs the user prefers
  *                 example: [1, 2, 3]
+ *               image_path:
+ *                 type: string
+ *                 description: Optional path to the user's profile image
+ *                 example: /uploads/profile123.jpg
  *     responses:
  *       201:
- *         description: User successfully created.
+ *         description: User successfully registered
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 id:
- *                   type: integer
- *                   example: 2
+ *                 token:
+ *                   type: string
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6...
+ *                   description: JWT token for authentication
+ *                 user:
+ *                   type: object
+ *                   description: Created user object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 2
  *       400:
- *         description: Bad request, missing required fields.
+ *         description: Bad request – Missing or invalid fields
  *       500:
- *         description: Internal server error.
+ *         description: Internal server error
  */
 const insertUser = async (request, response) => {
     try {
@@ -142,6 +154,56 @@ const insertUser = async (request, response) => {
     }
 };
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Log in a user
+ *     description: Authenticates a user using email and password, and returns a JWT token if valid.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: jane.smith@email.com
+ *               password:
+ *                 type: string
+ *                 description: User's password (plaintext)
+ *                 example: myStrongPassword123
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT token for authenticated user
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6...
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                       example: 2
+ *                     email:
+ *                       type: string
+ *                       example: jane.smith@email.com
+ *       401:
+ *         description: Unauthorized – Invalid email or password
+ *       500:
+ *         description: Internal server error
+ */
 const login = async (request, response) => {
     const { email, password } = request.body;
 
