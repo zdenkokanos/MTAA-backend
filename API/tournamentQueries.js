@@ -965,9 +965,9 @@ const joinTeamAtTournament = async (request, response) => {
  *                 type: object
  *                 properties:
  *                     id:
-    *                  type: integer
-    *                  description: The ID of the team
-    *                  example: 1
+ *                     type: integer
+ *                     description: The ID of the team
+ *                     example: 1
  *                   team_name:
  *                     type: string
  *                     description: The name of the team
@@ -1033,7 +1033,7 @@ const getEnrolledTeams = async (request, response) => {
  *     responses:
  *       200:
  *         description: "Ticket found"
-*         content:
+ *         content:
  *           application/json:
  *             schema:
  *               type: object
