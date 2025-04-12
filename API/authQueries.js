@@ -6,12 +6,20 @@ const saltRounds = 10;
 const JWT_SECRET = 'fbce145f629cbac3bf16fd7fe6d28cb96246396da7f20ca58293f397a04decab7746cd06afe308f71166dba2977eb9d6f1c059a7eee285f27060b408d36a6948';  // For JWT tokenization, it should typically be stored in an environment variable for security reasons. 
 // However, in this example, it is hardcoded to make it easier for supervisors to test and verify the functionality during development.
 
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: User authentication and registration
+ */
+
 
 /**
  * @swagger
  * /auth/register:
  *   post:
  *     summary: Register a new user
+ *     tags: [Auth]
  *     description: Registers a new user, stores their preferences, and returns a JWT token along with the user ID.
  *     requestBody:
  *       required: true
@@ -158,6 +166,7 @@ const insertUser = async (request, response) => {
  * /auth/login:
  *   post:
  *     summary: Log in a user
+ *     tags: [Auth]
  *     description: Authenticates a user using email and password, and returns a JWT token if valid.
  *     requestBody:
  *       required: true

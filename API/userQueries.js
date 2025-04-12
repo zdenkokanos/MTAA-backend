@@ -5,10 +5,18 @@ const geolib = require('geolib');
 const saltRounds = 10;
 
 /**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: Users management
+ */
+
+/**
 * @swagger
 * /users:
 *    get:
 *      summary: Retrieve all users
+*      tags: [Users]
 *      description: Returns a list of users with their details.
 *      responses:
 *        '200':
@@ -73,6 +81,7 @@ const getUsers = (request, response) => {
  * /users/{id}/info:
  *   get:
  *     summary: Get user info by user ID
+ *     tags: [Users]
  *     description: Retrieves detailed information of a user based on their ID
  *     parameters:
  *       - in: path
@@ -150,9 +159,10 @@ const getUserInfo = async (request, response) => {
 
 /**
  * @swagger
- * /users/:email/id:
+ * /users/{email}/id:
  *   get:
  *     summary: Retrieve user ID by email
+ *     tags: [Users]
  *     description: Returns the user ID based on their unique email address.
  *     parameters:
  *       - in: path
@@ -200,6 +210,7 @@ const getUserId = async (request, response) => {
  * /users/changePassword:
  *   put:
  *     summary: Change user password
+ *     tags: [Users]
  *     description: Updates the password for a specific user based on their ID, after validating the old password.
  *     requestBody:
  *       required: true
@@ -276,6 +287,7 @@ const changePassword = async (request, response) => {
  * /users/editProfile:
  *   put:
  *     summary: Edit user profile
+ *     tags: [Users]
  *     description: Updates the user's profile information based on their ID.
  *     requestBody:
  *       required: true
@@ -345,6 +357,7 @@ const editProfile = async (request, response) => {
  * /users/editPreferences:
  *   put:
  *     summary: Edit user preferences
+ *     tags: [Users]
  *     description: Updates the user's location preferences based on their ID.
  *     requestBody:
  *       required: true
@@ -409,9 +422,10 @@ const editPreferences = async (request, response) => {
 
 /**
  * @swagger
- * /users/:id/tournaments:
+ * /users/{id}/tournaments:
  *   get:
  *     summary: Get all tournaments a user is registered for
+ *     tags: [Users]
  *     description: Retrieves all tournaments where a specific user is registered.
  *     parameters:
  *       - in: path
@@ -489,6 +503,7 @@ const getUsersTournaments = async (request, response) =>{
  * /users/{id}/tournaments/owned:
  *   get:
  *     summary: Get a user's owned tournaments
+ *     tags: [Users]
  *     description: Retrieves a list of tournaments that are owned by the specified user.
  *     parameters:
  *       - name: id  # Path parameter for user ID
@@ -571,6 +586,7 @@ const getUsersOwnedTournaments = async (request, response) =>{
  * /users/{id}/tournaments/history: 
  *   get:
  *     summary: Get a user's tournament history
+ *     tags: [Users]
  *     description: Retrieves a list of tournaments the user has participated in, along with their position and category image, for closed tournaments.
  *     parameters:
  *       - name: id  # Path parameter for user ID
@@ -651,6 +667,7 @@ const getUsersTournamentsHistory = async (request, response) =>{
  * /users/{id}/tickets: 
  *   get:
  *     summary: Get all tickets for a specific user
+ *     tags: [Users]
  *     description: Retrieves all tickets that belong to a specific user.
  *     parameters:
  *       - in: path
@@ -715,6 +732,7 @@ const getUserTickets = async (request, response) =>{
  * /users/{id}/tickets/{ticket_id}/qr: 
  *   get:
  *     summary: Get ticket details for QR generation
+ *     tags: [Users]
  *     description: Retrieves ticket information, including the associated team name and code, based on the provided ticket ID for a specific user.
  *     parameters:
  *       - name: id  # Path parameter for user ID
@@ -787,6 +805,7 @@ const getTicketQR = async (request, response) => {
  * /users/check-email:
  *   get:
  *     summary: Check if an email already exists in the system
+ *     tags: [Users]
  *     description: This endpoint checks if the provided email address is already registered in the system.
  *     parameters:
  *       - in: query
@@ -831,9 +850,10 @@ const checkEmailExists = async (request, response) => {
 
 /**
  * @swagger
- * /users/{id}/tournaments-reccomendations:
+ * /users/{id}/top-picks:
  *   get:
  *     summary: Get recommended tournaments for a user
+ *     tags: [Users]
  *     description: Returns a list of up to 5 upcoming tournaments based on the user's preferred sport categories and closest geographical location. Results are first filtered by distance and then sorted by the soonest date.
  *     parameters:
  *       - name: id

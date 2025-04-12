@@ -5,6 +5,7 @@ const pool = require('./pooling'); // Import the database pool
  * /tournaments/categories:
  *   get:
  *     summary: Retrieve all sport categories
+ *     tags: [Tournaments]
  *     description: Fetches a list of all available sport categories, including their names and associated images.
  *     operationId: getAllCategories
  *     responses:
