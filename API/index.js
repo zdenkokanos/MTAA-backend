@@ -10,9 +10,6 @@ const upload = require('./multerConfig');
 const checkUserIdentity = require('./middleware/checkUserIdentity')
 const verifyToken = require('./middleware/authMiddleware');
 
-// app.get('/protected', verifyToken, (request, response) => {
-//   response.json({ message: `Hello user ${request.user.userId}` });
-// });
 
 // Import other modules
 const dbUser = require('./userQueries')
@@ -37,13 +34,13 @@ const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
     info: {
-      title: 'Tournament API',
+      title: 'Tournify API',
       version: '1.0.0',
       description: 'API for managing tournaments and users',
     },
     servers: [
       {
-        url: 'http://localhost:3000', // Localhost
+        url: 'http://localhost:3000',
       },
     ],
   },
@@ -53,7 +50,7 @@ const swaggerSpec = swaggerJSDoc(swaggerOptions);
 // Serve Swagger docs
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Define a simple route for the root of the application
+// Default route
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
@@ -76,8 +73,6 @@ app.get('/tournaments/:id/leaderboard', dbTournament.getLeaderboardByTournament)
 app.get('/tournaments/:id/enrolled', dbTournament.getEnrolledTeams);
 app.get('/tournaments/categories', dbCategories.getAllCategories);
 app.get('/tournaments/:id/teams/count', dbTournament.getTeamCount);
-app.get('/users/:id/tournaments-reccomendations', dbUser.getRecommendedTournaments);
-// Tickets
 
 //// ## POSTs ##
 // Users
@@ -108,15 +103,3 @@ app.delete('/tournaments/leaderboard/remove', verifyToken, dbTournament.removeFr
 app.listen(port, () => {
   console.log(`App running on port ${port}. Have fun.`)
 })
-
-
-// swagger boilerplate
-// /**
-//  * @swagger
-//  * <url>:
-//  *  get:
-//  *    summary:
-//  *    description:
-//  *    parameters:
-//  *    responses: 
-//  */
