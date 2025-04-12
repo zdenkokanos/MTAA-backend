@@ -3,8 +3,6 @@ const pool = require('./pooling'); // Import the database pool
 const bcrypt = require('bcrypt');
 const geolib = require('geolib');
 const saltRounds = 10;
-const JWT_SECRET = 'jwt_secret';  // For JWT tokenization, it should typically be stored in an environment variable for security reasons. 
-// However, in this example, it is hardcoded to make it easier for supervisors to test and verify the functionality during development.
 
 /**
 * @swagger
@@ -196,27 +194,6 @@ const getUserId = async (request, response) => {
     response.status(500).json({error: error.message});
   }
 }
-
-
-// POST user login creditials and receive their id as sign of successfull login; WILL BE CHANGEG - TOKENIZATION
-const loginUser = async (request, response) => {
-  try {
-    const { email, password } = request.body;
-
-    const { rows } = await pool.query(
-      `SELECT id FROM users WHERE email = $1 AND password = $2;`,
-      [email, password]
-    );
-
-    if (rows.length === 0) {
-      return response.status(401).json({ message: "Invalid credentials" });
-    }
-
-    response.status(200).json({ id: rows[0].id }); // Return the logged-in user ID
-  } catch (error) {
-    response.status(500).json({ error: error.message });
-  }
-};
 
 /**
  * @swagger
@@ -667,101 +644,6 @@ const getUsersTournamentsHistory = async (request, response) =>{
   }
 } 
 
-/**
- * @swagger
- * /users/{id}/top-picks:
- *   get:
- *     summary: Retrieve top upcoming tournaments based on user preferences
- *     description: Returns up to 5 upcoming public tournaments that match the user's sport preferences and in which the user is not already participating in.
- *     operationId: getTopPicks
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: ID of the user whose preferences will be used to filter tournaments.
- *         schema:
- *           type: integer
- *           example: 1
- *     responses:
- *       '200':
- *         description: A list of up to 5 upcoming tournaments matching the user's preferences.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                     example: 1
- *                   tournament_name:
- *                     type: string
- *                     example: "NYC Football Cup"
- *                   date:
- *                     type: string
- *                     format: date-time
- *                     example: "2025-06-30T22:00:00.000Z"
- *                   latitude:
- *                     type: number
- *                     format: float
- *                     example: 40.7128
- *                   longitude:
- *                     type: number
- *                     format: float
- *                     example: -74.006
- *                   category_image:
- *                     type: string
- *                     example: "football.png"
- *       '404':
- *         description: No upcoming tournaments found for this user.
- *       '500':
- *         description: Internal Server Error - Something went wrong on the server.
- */
-const getTopPicks = async (request, response) => { 
-  try {
-      const userID = request.params.id;
-      
-      const { rows } = await pool.query(
-          `SELECT
-              t.id,
-              t.tournament_name,
-              t.date,
-              t.latitude,
-              t.longitude,
-              sc.category_image
-          FROM
-              tournaments t
-              JOIN sport_category sc ON t.category_id = sc.id
-              JOIN preferences p ON t.category_id = p.sport_id
-              AND $1 = p.user_id
-          WHERE
-              t.is_public = TRUE
-              AND t.status = 'Upcoming'
-              AND t.date > NOW()
-              AND t.id NOT IN (
-                    SELECT tm.tournament_id
-                    FROM team_members tm
-                    WHERE tm.user_id = $1
-                )
-          ORDER BY
-              t.date ASC
-          LIMIT
-              5;`, [userID] // Pass the userID as parameter for query
-      );
-
-      if (rows.length === 0) {
-        return response.status(404).json({ message: "No upcoming tournaments found for this user" });
-    }
-      // Send response with the retrieved rows
-      response.status(200).json(rows);
-  } catch (error) {
-      // Handle errors and send a 500 response
-      response.status(500).json({ error: error.message });
-  }
-}; 
-
-
 // Tickets
 
 /**
@@ -1002,7 +884,7 @@ const checkEmailExists = async (request, response) => {
  *       500:
  *         description: Internal server error, failed to retrieve recommended tournaments.
  */
-const getRecommendedTournaments = async (request, response) => {
+const getTopPicks = async (request, response) => {
 
   const userId = request.params.id;
   
@@ -1021,7 +903,7 @@ const getRecommendedTournaments = async (request, response) => {
       
       // 2. load tournaments
       const tournamentResult = await pool.query(
-          `WITH userPreferedCategories as (
+          `WITH userPreferredCategories as (
               SELECT
                   sc.id,
                   sc.category_image
@@ -1039,8 +921,8 @@ const getRecommendedTournaments = async (request, response) => {
               upc.category_image
           FROM
               tournaments tt
-          JOIN userPreferedCategories upc on upc.id = tt.category_id
-          WHERE status = 'Upcoming';`,
+          JOIN userPreferredCategories upc on upc.id = tt.category_id
+          WHERE status = 'Upcoming'`,
           [userId]
       );
       const tournaments = tournamentResult.rows;
@@ -1062,8 +944,6 @@ const getRecommendedTournaments = async (request, response) => {
           };
       });
 
-      
-  
       // 4. Sort by distance and take top 5
       const top5Closest = tournamentsWithDistance
           .filter(t => t.date) // vyhodí null/undefined dátumy
@@ -1086,7 +966,6 @@ module.exports = {
     getUsers,
     getUserInfo,
     getUserId,
-    loginUser,
     changePassword,
     editProfile,
     editPreferences,
@@ -1096,6 +975,5 @@ module.exports = {
     getUserTickets,
     getUsersOwnedTournaments,
     getTicketQR,
-    checkEmailExists,
-    getRecommendedTournaments
+    checkEmailExists
 };

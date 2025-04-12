@@ -1,7 +1,7 @@
-const { request } = require('http');
+// const { request } = require('http');
 const pool = require('./pooling'); // Import the database pool
 const crypto = require('crypto');
-const { response } = require('express');
+// const { response } = require('express');
 
 /**
  * @swagger
