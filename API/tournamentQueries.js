@@ -1,5 +1,8 @@
+const { request } = require('http');
 const pool = require('./pooling'); // Import the database pool
 const crypto = require('crypto');
+const { response } = require('express');
+const geolib = require('geolib');
 
 /**
  * @swagger
@@ -8,20 +11,20 @@ const crypto = require('crypto');
  *     summary: Get all tournaments with sport category filter excluding user’s assigned tournaments
  *     description: Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of.
  *     parameters:
- *       - in: query
+ *       - in: path
  *         name: category_id
- *         schema:
- *           type: integer
  *         required: true
  *         description: ID of the sport category to filter tournaments.
  *         example: 2
- *       - in: query
- *         name: user_id
  *         schema:
  *           type: integer
+ *       - in: path
+ *         name: user_id
  *         required: true
  *         description: ID of the user to exclude tournaments they are already assigned to.
  *         example: 7
+ *         schema:
+ *           type: object
  *     responses:
  *       200:
  *         description: List of tournaments retrieved successfully.
@@ -941,7 +944,7 @@ const joinTeamAtTournament = async (request, response) => {
 }; // Chat GPT generated
 
 
-
+// ????????
 /**
  * @swagger
  * /tournaments/{id}/enrolled:
@@ -949,33 +952,32 @@ const joinTeamAtTournament = async (request, response) => {
  *     summary: Get a list of teams enrolled in a tournament
  *     description: Retrieves a list of teams enrolled in a specific tournament, along with the number of members in each team.
  *     parameters:
- *       - name: id  # Path parameter for tournament ID
- *         in: path
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
  *         required: true
- *         type: integer
  *         description: The ID of the tournament.
+ *         example: 1
  *     responses:
  *       200:
  *         description: Successfully retrieved list of teams and their members
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                     id:
- *                     type: integer
- *                     description: The ID of the team
- *                     example: 1
- *                   team_name:
- *                     type: string
- *                     description: The name of the team
- *                     example: "Team A"
- *                   number_of_members:
- *                     type: integer
- *                     description: The number of members in the team
- *                     example: 5
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 team_name:
+ *                   type: string
+ *                   description: The name of the team
+ *                   example: "Team A"
+ *                 number_of_members:
+ *                   type: integer
+ *                   description: The number of members in the team
+ *                   example: 5
  *       404:
  *         description: No teams found for this tournament
  *       500:
@@ -1138,6 +1140,90 @@ const getTeamCount = async (request, response) => {
         response.status(500).json({ error: error.message });
     }
 } 
+// TODO: odporucanie turnajov top 5 na zaklade preferovanej polohy pouzivatela, zoberiem lat/long z daneho uzivatela, cez asi get poslem id a pre to id to spravim a potom vypocitam,
+// treba mi nejaku kniznicu co to vypocita podla toho vzorca a where distance order by closest limit 5 
+
+const getRecommendedTournaments = async (request, response) => {
+
+    const userId = request.params.id;
+    
+    try{
+        // 1. load users coordinates
+        const userResult = await pool.query(
+            `SELECT preferred_longitude, preferred_latitude FROM users WHERE id = $1`,
+            [userId]
+        )
+        if (userResult.rows.length === 0){
+            return response.status(404).json({ message: 'User not found' });
+        }
+        const userLat = userResult.rows[0].preferred_latitude;
+        const userLong = userResult.rows[0].preferred_longitude;
+        
+        
+        // 2. load tournaments
+        const tournamentResult = await pool.query(
+            `WITH userPreferedCategories as (
+                SELECT
+                    sc.id,
+                    sc.category_image
+                FROM
+                    preferences pp
+                JOIN sport_category sc ON sc.id = pp.sport_id
+                WHERE user_id = $1
+            )
+            SELECT
+                tt.id,
+                tt.tournament_name,
+                tt.date,
+                tt.latitude,
+                tt.longitude,
+                upc.category_image
+            FROM
+                tournaments tt
+            JOIN userPreferedCategories upc on upc.id = tt.category_id
+            WHERE status = 'Upcoming';`,
+            [userId]
+        );
+        const tournaments = tournamentResult.rows;
+
+        
+        // 3. Calculate distance for each tournament
+        const tournamentsWithDistance = tournaments.map(t => {
+            const tournamentLat = parseFloat(t.latitude); 
+            const tournamentLong = parseFloat(t.longitude); 
+
+            const distance = geolib.getDistance(
+                { latitude: userLat, longitude: userLong },
+                { latitude: tournamentLat, longitude: tournamentLong }
+            );
+
+            return {
+                ...t, // include all tournament data
+                distance: (distance / 1000).toFixed(2) // convert to kilometers
+            };
+        });
+
+        
+    
+        // 4. Sort by distance and take top 5
+        const top5Closest = tournamentsWithDistance
+            .filter(t => t.date) // vyhodí null/undefined dátumy
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 5);
+
+        // 5. Sort those 5 by date (soonest first)
+        const sortedByDate = top5Closest.sort(
+            (a, b) => new Date(a.date) - new Date(b.date)
+        );
+        
+        response.status(200).json(sortedByDate);
+
+
+    }catch(error){
+        response.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
@@ -1152,5 +1238,6 @@ module.exports = {
     joinTeamAtTournament,
     getEnrolledTeams,
     checkTickets,
-    getTeamCount
+    getTeamCount,
+    getRecommendedTournaments
 };

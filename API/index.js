@@ -76,6 +76,7 @@ app.get('/tournaments/:id/leaderboard', dbTournament.getLeaderboardByTournament)
 app.get('/tournaments/:id/enrolled', dbTournament.getEnrolledTeams);
 app.get('/tournaments/categories', dbCategories.getAllCategories);
 app.get('/tournaments/:id/teams/count', dbTournament.getTeamCount);
+app.get('/tournaments/:id/reccomendations', dbTournament.getRecommendedTournaments);
 // Tickets
 
 //// ## POSTs ##

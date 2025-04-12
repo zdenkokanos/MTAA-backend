@@ -216,6 +216,20 @@ install `npm install -g nodemon` to autorefresh server and start server with `no
 ## Tokenization
 - `npm install jsonwebtoken`
 
+## Geolocation
+- `npm install geolib`
+```javaScript 
+const geolib = require('geolib');
+
+const distance = geolib.getDistance(
+  { latitude: xx, longitude: xy },
+  { latitude: yx, longitude: yy }
+);
+- returns distance in meters
+```
+
+
+
 ## Swagger
 Swagger is a documentation making tool, if you want to use that, here is how it works:
 
