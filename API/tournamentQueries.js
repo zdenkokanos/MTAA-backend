@@ -1,5 +1,7 @@
+const { request } = require('http');
 const pool = require('./pooling'); // Import the database pool
 const crypto = require('crypto');
+const { response } = require('express');
 
 /**
  * @swagger
@@ -8,20 +10,20 @@ const crypto = require('crypto');
  *     summary: Get all tournaments with sport category filter excluding user’s assigned tournaments
  *     description: Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of.
  *     parameters:
- *       - in: query
+ *       - in: path
  *         name: category_id
- *         schema:
- *           type: integer
  *         required: true
  *         description: ID of the sport category to filter tournaments.
  *         example: 2
- *       - in: query
- *         name: user_id
  *         schema:
  *           type: integer
+ *       - in: path
+ *         name: user_id
  *         required: true
  *         description: ID of the user to exclude tournaments they are already assigned to.
  *         example: 7
+ *         schema:
+ *           type: object
  *     responses:
  *       200:
  *         description: List of tournaments retrieved successfully.
@@ -941,7 +943,7 @@ const joinTeamAtTournament = async (request, response) => {
 }; // Chat GPT generated
 
 
-
+// ????????
 /**
  * @swagger
  * /tournaments/{id}/enrolled:
@@ -949,33 +951,32 @@ const joinTeamAtTournament = async (request, response) => {
  *     summary: Get a list of teams enrolled in a tournament
  *     description: Retrieves a list of teams enrolled in a specific tournament, along with the number of members in each team.
  *     parameters:
- *       - name: id  # Path parameter for tournament ID
- *         in: path
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
  *         required: true
- *         type: integer
  *         description: The ID of the tournament.
+ *         example: 1
  *     responses:
  *       200:
  *         description: Successfully retrieved list of teams and their members
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                     id:
- *                     type: integer
- *                     description: The ID of the team
- *                     example: 1
- *                   team_name:
- *                     type: string
- *                     description: The name of the team
- *                     example: "Team A"
- *                   number_of_members:
- *                     type: integer
- *                     description: The number of members in the team
- *                     example: 5
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 team_name:
+ *                   type: string
+ *                   description: The name of the team
+ *                   example: "Team A"
+ *                 number_of_members:
+ *                   type: integer
+ *                   description: The number of members in the team
+ *                   example: 5
  *       404:
  *         description: No teams found for this tournament
  *       500:
@@ -1138,6 +1139,7 @@ const getTeamCount = async (request, response) => {
         response.status(500).json({ error: error.message });
     }
 } 
+
 module.exports = {
     getTournaments,
     getTournamentInfo,
