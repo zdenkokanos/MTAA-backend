@@ -2,7 +2,8 @@
 const pool = require('./pooling'); // Import the database pool
 const bcrypt = require('bcrypt');
 const geolib = require('geolib');
-const saltRounds = 10;
+require('dotenv').config();
+const saltRounds = process.env.SALT_ROUNDS
 
 /**
  * @swagger

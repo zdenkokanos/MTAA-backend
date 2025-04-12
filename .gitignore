@@ -3,3 +3,5 @@ API/node_modules/
 pooling.js
 
 **/.DS_Store
+
+.env

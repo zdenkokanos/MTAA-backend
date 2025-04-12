@@ -2,9 +2,9 @@ const pool = require('./pooling'); // Import the database pool
 const bcrypt = require('bcrypt');
 const path = require('path');
 const jwt = require('jsonwebtoken')
-const saltRounds = 10;
-const JWT_SECRET = 'fbce145f629cbac3bf16fd7fe6d28cb96246396da7f20ca58293f397a04decab7746cd06afe308f71166dba2977eb9d6f1c059a7eee285f27060b408d36a6948';  // For JWT tokenization, it should typically be stored in an environment variable for security reasons. 
-// However, in this example, it is hardcoded to make it easier for supervisors to test and verify the functionality during development.
+require('dotenv').config();
+const saltRounds = process.env.SALT_ROUNDS;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
  * @swagger
