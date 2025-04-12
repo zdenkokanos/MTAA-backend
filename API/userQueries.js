@@ -1,6 +1,7 @@
 // queries.js
 const pool = require('./pooling'); // Import the database pool
 const bcrypt = require('bcrypt');
+const geolib = require('geolib');
 const saltRounds = 10;
 const JWT_SECRET = 'jwt_secret';  // For JWT tokenization, it should typically be stored in an environment variable for security reasons. 
 // However, in this example, it is hardcoded to make it easier for supervisors to test and verify the functionality during development.
@@ -946,7 +947,141 @@ const checkEmailExists = async (request, response) => {
   }
 }
 
+/**
+ * @swagger
+ * /users/{id}/tournaments-reccomendations:
+ *   get:
+ *     summary: Get recommended tournaments for a user
+ *     description: Returns a list of up to 5 upcoming tournaments based on the user's preferred sport categories and closest geographical location. Results are first filtered by distance and then sorted by the soonest date.
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the user whose tournament recommendations are being requested.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved a list of recommended tournaments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     description: Tournament ID
+ *                     example: 12
+ *                   tournament_name:
+ *                     type: string
+ *                     description: Name of the tournament
+ *                     example: Streetball Open 2025
+ *                   date:
+ *                     type: string
+ *                     format: date-time
+ *                     description: Date of the tournament
+ *                     example: 2025-12-01T00:00:00.000Z
+ *                   latitude:
+ *                     type: number
+ *                     format: float
+ *                     description: Latitude of the tournament location
+ *                   longitude:
+ *                     type: number
+ *                     format: float
+ *                     description: Longitude of the tournament location
+ *                   category_image:
+ *                     type: string
+ *                   distance:
+ *                     type: string
+ *                     description: Distance in kilometers from the user's preferred location
+ *                     example: "15.72"
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error, failed to retrieve recommended tournaments.
+ */
+const getRecommendedTournaments = async (request, response) => {
 
+  const userId = request.params.id;
+  
+  try{
+      // 1. load users coordinates
+      const userResult = await pool.query(
+          `SELECT preferred_longitude, preferred_latitude FROM users WHERE id = $1`,
+          [userId]
+      )
+      if (userResult.rows.length === 0){
+          return response.status(404).json({ message: 'User not found' });
+      }
+      const userLat = userResult.rows[0].preferred_latitude;
+      const userLong = userResult.rows[0].preferred_longitude;
+      
+      
+      // 2. load tournaments
+      const tournamentResult = await pool.query(
+          `WITH userPreferedCategories as (
+              SELECT
+                  sc.id,
+                  sc.category_image
+              FROM
+                  preferences pp
+              JOIN sport_category sc ON sc.id = pp.sport_id
+              WHERE user_id = $1
+          )
+          SELECT
+              tt.id,
+              tt.tournament_name,
+              tt.date,
+              tt.latitude,
+              tt.longitude,
+              upc.category_image
+          FROM
+              tournaments tt
+          JOIN userPreferedCategories upc on upc.id = tt.category_id
+          WHERE status = 'Upcoming';`,
+          [userId]
+      );
+      const tournaments = tournamentResult.rows;
+
+      
+      // 3. Calculate distance for each tournament
+      const tournamentsWithDistance = tournaments.map(t => {
+          const tournamentLat = parseFloat(t.latitude); 
+          const tournamentLong = parseFloat(t.longitude); 
+
+          const distance = geolib.getDistance(
+              { latitude: userLat, longitude: userLong },
+              { latitude: tournamentLat, longitude: tournamentLong }
+          );
+
+          return {
+              ...t, // include all tournament data
+              distance: (distance / 1000).toFixed(2) // convert to kilometers
+          };
+      });
+
+      
+  
+      // 4. Sort by distance and take top 5
+      const top5Closest = tournamentsWithDistance
+          .filter(t => t.date) // vyhodí null/undefined dátumy
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 5);
+
+      // 5. Sort those 5 by date (soonest first)
+      const sortedByDate = top5Closest.sort(
+          (a, b) => new Date(a.date) - new Date(b.date)
+      );
+      
+      response.status(200).json(sortedByDate);
+
+
+  }catch(error){
+      response.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
     getUsers,
     getUserInfo,
@@ -961,5 +1096,6 @@ module.exports = {
     getUserTickets,
     getUsersOwnedTournaments,
     getTicketQR,
-    checkEmailExists
+    checkEmailExists,
+    getRecommendedTournaments
 };
