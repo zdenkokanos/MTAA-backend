@@ -1,7 +1,5 @@
-// const { request } = require('http');
 const pool = require('./pooling'); // Import the database pool
 const crypto = require('crypto');
-// const { response } = require('express');
 
 /**
  * @swagger
@@ -15,9 +13,9 @@ const crypto = require('crypto');
  * @swagger
  * /tournaments: 
  *   get:
- *     summary: Get all tournaments with sport category filter excluding user’s assigned tournaments
+ *     summary: Get all tournaments with sport category filter excluding user’s assigned and owned tournaments
  *     tags: [Tournaments]
- *     description: Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of.
+ *     description: Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of or owns.
  *     parameters:
  *       - in: query
  *         name: category_id
@@ -29,7 +27,7 @@ const crypto = require('crypto');
  *       - in: query
  *         name: user_id
  *         required: true
- *         description: ID of the user to exclude tournaments they are already assigned to.
+ *         description: ID of the user to exclude tournaments they are already assigned to or own.
  *         example: 1
  *         schema:
  *           type: integer
@@ -89,7 +87,7 @@ const getTournaments = async (request, response) => {
                     SELECT tm.tournament_id
                     FROM team_members tm
                     WHERE tm.user_id = $2
-                )`, [category_id, user_id]
+                ) AND t.owner_id <> $2`, [category_id, user_id]
         );
 
         if (rows.length === 0) {
@@ -332,7 +330,6 @@ const getLeaderboardByTournament = async (request, response) =>{
     }
 }
 
-// ????????
 /**
  * @swagger
  * /tournaments/{id}/enrolled:
@@ -633,10 +630,6 @@ const generateCode = (byte_length) => {
  *                 type: string
  *                 description: The name of the team.
  *                 example: "Team A"
- *               user_id:
- *                 type: integer
- *                 description: The ID of the user registering the team.
- *                 example: 1
  *     responses:
  *       200:
  *         description: Successfully registered team and user
@@ -718,10 +711,6 @@ const addTeamToTournament = async (request, response) => {
  *             required:
  *               - code     # Required parameter for team code
  *             properties:
- *               user_id:
- *                 type: integer
- *                 description: The ID of the user joining the team.
- *                 example: 1
  *               code:
  *                 type: string
  *                 description: The code of the team the user wants to join.
@@ -844,9 +833,6 @@ const joinTeamAtTournament = async (request, response) => {
  *                 tournament_id:
  *                   type: integer
  *                   example: 62
- *                 name:
- *                   type: string
- *                   description: "Name of the team member"
  *                 ticket:
  *                   type: string
  *                   example: 9HFBDAS24
@@ -882,11 +868,19 @@ const checkTickets = async (request, response) => {
 // PUT
 /**
  * @swagger
- * /tournaments:
+ * /tournaments/{id}/edit:
  *   put:
  *     summary: Edit an existing tournament
  *     tags: [Tournaments]
  *     description: Updates the information of an existing tournament.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the tournament to be updated.
+ *         schema:
+ *           type: integer
+ *           example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -894,7 +888,6 @@ const checkTickets = async (request, response) => {
  *           schema:
  *             type: object
  *             required:
- *               - tournament_id
  *               - tournament_name
  *               - category_id
  *               - location_name
@@ -907,12 +900,7 @@ const checkTickets = async (request, response) => {
  *               - prize_description
  *               - is_public
  *               - additional_info
- *               - status
  *             properties:
- *               tournament_id:
- *                 type: integer
- *                 description: ID of the tournament to be updated.
- *                 example: 1
  *               tournament_name:
  *                 type: string
  *                 example: Summer Basketball Championship
@@ -953,9 +941,6 @@ const checkTickets = async (request, response) => {
  *               additional_info:
  *                 type: string
  *                 example: Bring your own jerseys
- *               status:
- *                 type: string
- *                 example: Upcoming
  *     responses:
  *       200:
  *         description: Tournament updated successfully.
@@ -973,7 +958,8 @@ const checkTickets = async (request, response) => {
  *         description: Internal server error.
  */
 const editTournament = async (request, response) => {
-    const { tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status } = request.body;
+    const tournament_id = request.params.id;
+    const { tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info } = request.body;
 
     try {
         const { rowCount } = await pool.query(
@@ -990,10 +976,9 @@ const editTournament = async (request, response) => {
             entry_fee = $10,
             prize_description = $11,
             is_public = $12,
-            additional_info = $13,
-            status = $14
+            additional_info = $13
         WHERE id = $1
-            `, [tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info, status]
+            `, [tournament_id, tournament_name, category_id, location_name, latitude, longitude, level, max_team_size, game_setting, entry_fee, prize_description, is_public, additional_info]
         );
         
         if (rowCount === 0) {

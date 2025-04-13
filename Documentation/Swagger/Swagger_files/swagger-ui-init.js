@@ -37,8 +37,6 @@ window.onload = function() {
                   "required": [
                     "first_name",
                     "last_name",
-                    "gender",
-                    "age",
                     "email",
                     "password",
                     "preferred_location",
@@ -53,14 +51,6 @@ window.onload = function() {
                     "last_name": {
                       "type": "string",
                       "example": "Smith"
-                    },
-                    "gender": {
-                      "type": "string",
-                      "example": "Female"
-                    },
-                    "age": {
-                      "type": "integer",
-                      "example": 28
                     },
                     "email": {
                       "type": "string",
@@ -265,11 +255,11 @@ window.onload = function() {
       },
       "/tournaments": {
         "get": {
-          "summary": "Get all tournaments with sport category filter excluding user’s assigned tournaments",
+          "summary": "Get all tournaments with sport category filter excluding user’s assigned and owned tournaments",
           "tags": [
             "Tournaments"
           ],
-          "description": "Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of.",
+          "description": "Returns a list of tournaments filtered by sport category, excluding tournaments the user is already part of or owns.",
           "parameters": [
             {
               "in": "query",
@@ -285,7 +275,7 @@ window.onload = function() {
               "in": "query",
               "name": "user_id",
               "required": true,
-              "description": "ID of the user to exclude tournaments they are already assigned to.",
+              "description": "ID of the user to exclude tournaments they are already assigned to or own.",
               "example": 1,
               "schema": {
                 "type": "integer"
@@ -463,126 +453,6 @@ window.onload = function() {
             },
             "400": {
               "description": "Bad request, missing required fields."
-            },
-            "500": {
-              "description": "Internal server error."
-            }
-          }
-        },
-        "put": {
-          "summary": "Edit an existing tournament",
-          "tags": [
-            "Tournaments"
-          ],
-          "description": "Updates the information of an existing tournament.",
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "tournament_id",
-                    "tournament_name",
-                    "category_id",
-                    "location_name",
-                    "latitude",
-                    "longitude",
-                    "level",
-                    "max_team_size",
-                    "game_setting",
-                    "entry_fee",
-                    "prize_description",
-                    "is_public",
-                    "additional_info",
-                    "status"
-                  ],
-                  "properties": {
-                    "tournament_id": {
-                      "type": "integer",
-                      "description": "ID of the tournament to be updated.",
-                      "example": 1
-                    },
-                    "tournament_name": {
-                      "type": "string",
-                      "example": "Summer Basketball Championship"
-                    },
-                    "category_id": {
-                      "type": "integer",
-                      "description": "ID of the sport category.",
-                      "example": 2
-                    },
-                    "location_name": {
-                      "type": "string",
-                      "example": "Los Angeles Sports Arena"
-                    },
-                    "latitude": {
-                      "type": "number",
-                      "format": "float",
-                      "example": 34.0522
-                    },
-                    "longitude": {
-                      "type": "number",
-                      "format": "float",
-                      "example": -118.2437
-                    },
-                    "level": {
-                      "type": "string",
-                      "example": "Amateur"
-                    },
-                    "max_team_size": {
-                      "type": "integer",
-                      "example": 5
-                    },
-                    "game_setting": {
-                      "type": "string",
-                      "example": "Outdoor"
-                    },
-                    "entry_fee": {
-                      "type": "number",
-                      "format": "float",
-                      "example": 20
-                    },
-                    "prize_description": {
-                      "type": "string",
-                      "example": "Trophy and cash prize"
-                    },
-                    "is_public": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "additional_info": {
-                      "type": "string",
-                      "example": "Bring your own jerseys"
-                    },
-                    "status": {
-                      "type": "string",
-                      "example": "Upcoming"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Tournament updated successfully.",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "message": {
-                        "type": "string",
-                        "example": "Tournament updated successfully"
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "404": {
-              "description": "Tournament not found."
             },
             "500": {
               "description": "Internal server error."
@@ -946,11 +816,6 @@ window.onload = function() {
                       "type": "string",
                       "description": "The name of the team.",
                       "example": "Team A"
-                    },
-                    "user_id": {
-                      "type": "integer",
-                      "description": "The ID of the user registering the team.",
-                      "example": 1
                     }
                   }
                 }
@@ -1019,11 +884,6 @@ window.onload = function() {
                     "code"
                   ],
                   "properties": {
-                    "user_id": {
-                      "type": "integer",
-                      "description": "The ID of the user joining the team.",
-                      "example": 1
-                    },
                     "code": {
                       "type": "string",
                       "description": "The code of the team the user wants to join.",
@@ -1118,10 +978,6 @@ window.onload = function() {
                         "type": "integer",
                         "example": 62
                       },
-                      "name": {
-                        "type": "string",
-                        "description": "Name of the team member"
-                      },
                       "ticket": {
                         "type": "string",
                         "example": "9HFBDAS24"
@@ -1136,6 +992,129 @@ window.onload = function() {
             },
             "500": {
               "description": "Internal server error"
+            }
+          }
+        }
+      },
+      "/tournaments/{id}/edit": {
+        "put": {
+          "summary": "Edit an existing tournament",
+          "tags": [
+            "Tournaments"
+          ],
+          "description": "Updates the information of an existing tournament.",
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "description": "ID of the tournament to be updated.",
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "tournament_name",
+                    "category_id",
+                    "location_name",
+                    "latitude",
+                    "longitude",
+                    "level",
+                    "max_team_size",
+                    "game_setting",
+                    "entry_fee",
+                    "prize_description",
+                    "is_public",
+                    "additional_info"
+                  ],
+                  "properties": {
+                    "tournament_name": {
+                      "type": "string",
+                      "example": "Summer Basketball Championship"
+                    },
+                    "category_id": {
+                      "type": "integer",
+                      "description": "ID of the sport category.",
+                      "example": 2
+                    },
+                    "location_name": {
+                      "type": "string",
+                      "example": "Los Angeles Sports Arena"
+                    },
+                    "latitude": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 34.0522
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "format": "float",
+                      "example": -118.2437
+                    },
+                    "level": {
+                      "type": "string",
+                      "example": "Amateur"
+                    },
+                    "max_team_size": {
+                      "type": "integer",
+                      "example": 5
+                    },
+                    "game_setting": {
+                      "type": "string",
+                      "example": "Outdoor"
+                    },
+                    "entry_fee": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 20
+                    },
+                    "prize_description": {
+                      "type": "string",
+                      "example": "Trophy and cash prize"
+                    },
+                    "is_public": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "additional_info": {
+                      "type": "string",
+                      "example": "Bring your own jerseys"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Tournament updated successfully.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Tournament updated successfully"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Tournament not found."
+            },
+            "500": {
+              "description": "Internal server error."
             }
           }
         }
@@ -1425,51 +1404,6 @@ window.onload = function() {
           }
         }
       },
-      "/users/{email}/id": {
-        "get": {
-          "summary": "Retrieve user ID by email",
-          "tags": [
-            "Users"
-          ],
-          "description": "Returns the user ID based on their unique email address.",
-          "parameters": [
-            {
-              "in": "path",
-              "name": "email",
-              "required": true,
-              "schema": {
-                "type": "string"
-              },
-              "description": "The email of the user.",
-              "example": "jane.smith@email.com"
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "User ID retrieved successfully.",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "integer",
-                        "example": 2
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "404": {
-              "description": "User not found."
-            },
-            "500": {
-              "description": "Internal server error."
-            }
-          }
-        }
-      },
       "/users/changePassword": {
         "put": {
           "summary": "Change user password",
@@ -1541,18 +1475,10 @@ window.onload = function() {
                 "schema": {
                   "type": "object",
                   "required": [
-                    "id",
                     "first_name",
-                    "last_name",
-                    "age",
-                    "gender"
+                    "last_name"
                   ],
                   "properties": {
-                    "id": {
-                      "type": "integer",
-                      "description": "Unique user ID.",
-                      "example": 1
-                    },
                     "first_name": {
                       "type": "string",
                       "example": "John"
@@ -1560,14 +1486,6 @@ window.onload = function() {
                     "last_name": {
                       "type": "string",
                       "example": "Doe"
-                    },
-                    "age": {
-                      "type": "integer",
-                      "example": 30
-                    },
-                    "gender": {
-                      "type": "string",
-                      "example": "Male"
                     }
                   }
                 }
@@ -1614,17 +1532,11 @@ window.onload = function() {
                 "schema": {
                   "type": "object",
                   "required": [
-                    "id",
                     "preferred_location",
                     "preferred_longitude",
                     "preferred_latitude"
                   ],
                   "properties": {
-                    "id": {
-                      "type": "integer",
-                      "description": "Unique user ID.",
-                      "example": 1
-                    },
                     "preferred_location": {
                       "type": "string",
                       "example": "Los Angeles"

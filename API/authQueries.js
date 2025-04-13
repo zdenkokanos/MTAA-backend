@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const jwt = require('jsonwebtoken')
 require('dotenv').config();
-const saltRounds = process.env.SALT_ROUNDS;
+const saltRounds = parseInt(process.env.SALT_ROUNDS);
 const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
@@ -30,8 +30,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
  *             required:
  *               - first_name
  *               - last_name
- *               - gender
- *               - age
  *               - email
  *               - password
  *               - preferred_location
@@ -44,12 +42,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
  *               last_name:
  *                 type: string
  *                 example: Smith
- *               gender:
- *                 type: string
- *                 example: Female
- *               age:
- *                 type: integer
- *                 example: 28
  *               email:
  *                 type: string
  *                 format: email
@@ -108,7 +100,6 @@ const insertUser = async (request, response) => {
         // Extracting individual fields
         const { first_name, last_name, email, password, preferred_location, preferred_longitude, preferred_latitude, preferences } = request.body;
         const image_path = request.file ? path.basename(request.file.path) : null;
-
         // Hash the password before saving
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
