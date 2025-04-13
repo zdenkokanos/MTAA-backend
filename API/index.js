@@ -9,7 +9,7 @@ const upload = require('./multerConfig');
 
 const checkUserIdentity = require('./middleware/checkUserIdentity')
 const verifyToken = require('./middleware/authMiddleware');
-
+const checkUserIdentityTournament = require('./middleware/checkUserIdentityTournament');
 
 // Import other modules
 const dbUser = require('./userQueries')
@@ -57,9 +57,8 @@ app.get('/', (request, response) => {
 
 //// ## GETs ##
 // Users
-app.get('/users', verifyToken, dbUser.getUsers); //?
+app.get('/users', verifyToken, dbUser.getUsers);
 app.get('/users/:id/info', verifyToken, checkUserIdentity, dbUser.getUserInfo);
-app.get('/users/:email/id', dbUser.getUserId); //?
 app.get('/users/:id/tournaments', verifyToken, checkUserIdentity, dbUser.getUsersTournaments);
 app.get('/users/:id/tournaments/history', verifyToken, checkUserIdentity, dbUser.getUsersTournamentsHistory);
 app.get('/users/:id/tournaments/owned', verifyToken, checkUserIdentity, dbUser.getUsersOwnedTournaments);
@@ -89,12 +88,12 @@ app.post('/tournaments/:id/check-tickets', verifyToken, dbTournament.checkTicket
 //// ## PUTs ##
 // Users
 app.put('/users/changePassword', verifyToken, dbUser.changePassword);
-app.put('/users/editProfile', verifyToken, dbUser.editProfile); //!
-app.put('/users/editPreferences', verifyToken, dbUser.editPreferences); //!
+app.put('/users/editProfile', verifyToken, dbUser.editProfile);
+app.put('/users/editPreferences', verifyToken, dbUser.editPreferences);
 // Tournaments
-app.put('/tournaments/edit', verifyToken, dbTournament.editTournament);
-app.put('/tournaments/:id/start', verifyToken, dbTournament.startTournament);
-app.put('/tournaments/:id/stop', verifyToken, dbTournament.stopTournament);
+app.put('/tournaments/:id/edit', verifyToken, checkUserIdentityTournament, dbTournament.editTournament);
+app.put('/tournaments/:id/start', verifyToken, checkUserIdentityTournament, dbTournament.startTournament);
+app.put('/tournaments/:id/stop', verifyToken, checkUserIdentityTournament, dbTournament.stopTournament);
 
 //// ## DELETEs ##
 app.delete('/tournaments/leaderboard/remove', verifyToken, dbTournament.removeFromLeaderboard);

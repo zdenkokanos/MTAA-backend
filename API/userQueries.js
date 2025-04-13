@@ -3,7 +3,7 @@ const pool = require('./pooling'); // Import the database pool
 const bcrypt = require('bcrypt');
 const geolib = require('geolib');
 require('dotenv').config();
-const saltRounds = process.env.SALT_ROUNDS
+const saltRounds = parseInt(process.env.SALT_ROUNDS);
 
 /**
  * @swagger
@@ -160,54 +160,6 @@ const getUserInfo = async (request, response) => {
 
 /**
  * @swagger
- * /users/{email}/id:
- *   get:
- *     summary: Retrieve user ID by email
- *     tags: [Users]
- *     description: Returns the user ID based on their unique email address.
- *     parameters:
- *       - in: path
- *         name: email
- *         required: true
- *         schema:
- *           type: string
- *         description: The email of the user.
- *         example: jane.smith@email.com
- *     responses:
- *       200:
- *         description: User ID retrieved successfully.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   example: 2
- *       404:
- *         description: User not found.
- *       500:
- *         description: Internal server error.
- */
-const getUserId = async (request, response) => {
-  try{
-    const userEmail = request.params.email;
-    const { rows } = await pool.query(
-      `SELECT id FROM users WHERE trim(email) = $1;`, [userEmail]
-    );
-
-    if (rows.length === 0){
-      return response.status(404).json({ message: "User not found" });
-    }
-
-    response.status(200).json(rows[0]);
-  }catch(error){
-    response.status(500).json({error: error.message});
-  }
-}
-
-/**
- * @swagger
  * /users/changePassword:
  *   put:
  *     summary: Change user password
@@ -297,28 +249,15 @@ const changePassword = async (request, response) => {
  *           schema:
  *             type: object
  *             required:
- *               - id
  *               - first_name
  *               - last_name
- *               - age
- *               - gender
  *             properties:
- *               id:
- *                 type: integer
- *                 description: Unique user ID.
- *                 example: 1
  *               first_name:
  *                 type: string
  *                 example: John
  *               last_name:
  *                 type: string
  *                 example: Doe
- *               age:
- *                 type: integer
- *                 example: 30
- *               gender:
- *                 type: string
- *                 example: Male
  *     responses:
  *       200:
  *         description: Profile updated successfully.
@@ -337,14 +276,14 @@ const changePassword = async (request, response) => {
  */
 const editProfile = async (request, response) => {
   try {
-    const { first_name, last_name, age, gender } = request.body;
+    const { first_name, last_name } = request.body;
     const userId = request.user.userId; // from token
 
     await pool.query(
       `UPDATE users 
-       SET first_name = $1, last_name = $2, age = $3, gender = $4
-       WHERE id = $5`,
-      [first_name, last_name, age, gender, userId]
+       SET first_name = $1, last_name = $2
+       WHERE id = $3`,
+      [first_name, last_name, userId]
     );
 
     response.status(200).json({ message: "Profile updated successfully" });
@@ -367,15 +306,10 @@ const editProfile = async (request, response) => {
  *           schema:
  *             type: object
  *             required:
- *               - id
  *               - preferred_location
  *               - preferred_longitude
  *               - preferred_latitude
  *             properties:
- *               id:
- *                 type: integer
- *                 description: Unique user ID.
- *                 example: 1
  *               preferred_location:
  *                 type: string
  *                 example: Los Angeles
@@ -943,12 +877,15 @@ const getTopPicks = async (request, response) => {
           FROM
               tournaments tt
           JOIN userPreferredCategories upc on upc.id = tt.category_id
-          WHERE status = 'Upcoming'`,
+          WHERE tt.id NOT IN (
+                    SELECT tm.tournament_id
+                    FROM team_members tm
+                    WHERE tm.user_id = $1
+                ) AND tt.owner_id <> $1`,
           [userId]
       );
       const tournaments = tournamentResult.rows;
 
-      
       // 3. Calculate distance for each tournament
       const tournamentsWithDistance = tournaments.map(t => {
           const tournamentLat = parseFloat(t.latitude); 
@@ -986,7 +923,6 @@ const getTopPicks = async (request, response) => {
 module.exports = {
     getUsers,
     getUserInfo,
-    getUserId,
     changePassword,
     editProfile,
     editPreferences,
