@@ -127,7 +127,7 @@ const getTournaments = async (request, response) => {
  *                     type: integer
  *                     description: The total number of teams in the tournament
  *                     example: 10
- *       404:
+ *       204:
  *         description: No teams found for the specified tournament
  *       500:
  *         description: Internal server error, failed to retrieve data.
@@ -146,7 +146,7 @@ const getTeamCount = async (request, response) => {
         );
 
         if (result.rowCount === 0) {
-            return response.status(404).json({ message: "No teams found for this tournament" });
+            return response.status(204).json({ message: "No teams found for this tournament" });
         }
 
         response.status(200).json(result.rows);
@@ -673,16 +673,20 @@ const addTeamToTournament = async (request, response) => {
         const team_id = teamResult.rows[0].id;
 
         // 2. Insert into team_members
-        await pool.query(
+        const memberResult = await pool.query(
             `INSERT INTO team_members (user_id, team_id, tournament_id, ticket) 
-             VALUES ($1, $2, $3, $4)`,
+             VALUES ($1, $2, $3, $4)
+             RETURNING id`,
             [user_id, team_id, tournament_id, ticket_hash]
         );
+
+        const ticket_id = memberResult.rows[0].id;
 
         response.status(200).json({ 
             message: "Team and member registered",
             team_code: code,
-            ticket: ticket_hash
+            ticket: ticket_hash,
+            ticketId: ticket_id
         });
     } catch (error) {
         response.status(500).json({ error: error.message });
@@ -747,7 +751,7 @@ const joinTeamAtTournament = async (request, response) => {
         );
 
         if (teamResult.rowCount === 0) {
-            return response.status(404).json({ message: "Team not found" });
+            return response.status(404).json({ message: "Team not found" + code });
         }
 
         const team_id = teamResult.rows[0].id;

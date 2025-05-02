@@ -716,7 +716,8 @@ const getTicketQR = async (request, response) => {
         `SELECT
             tm.ticket,
             t.team_name,
-            t.code
+            t.code,
+            tm.tournament_id
         FROM
             team_members tm
             JOIN teams t ON tm.team_id = t.id
@@ -881,7 +882,8 @@ const getTopPicks = async (request, response) => {
                     SELECT tm.tournament_id
                     FROM team_members tm
                     WHERE tm.user_id = $1
-                ) AND tt.owner_id <> $1`,
+                ) AND tt.owner_id <> $1
+                 AND tt.date >= CURRENT_DATE`,
           [userId]
       );
       const tournaments = tournamentResult.rows;

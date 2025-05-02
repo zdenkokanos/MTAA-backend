@@ -1,5 +1,6 @@
 // Importing required libraries
 const express = require('express')
+const path = require('path');
 const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
@@ -54,6 +55,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/', (request, response) => {
   response.json({ info: 'Node.js, Express, and Postgres API' })
 })
+
+app.use('/uploads/', express.static(path.join(__dirname, 'uploads/images')));
+app.use('/category/images/', express.static(path.join(__dirname, 'categoryImages')));
 
 //// ## GETs ##
 // Users
