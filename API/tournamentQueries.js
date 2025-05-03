@@ -313,11 +313,13 @@ const getLeaderboardByTournament = async (request, response) =>{
     try {
         const result = await pool.query(
             `SELECT
-                *
+                l.*,
+                t.team_name as name
             FROM
-                leaderboard
+                leaderboard l
+                JOIN teams t ON l.team_id = t.id
             WHERE
-                tournament_id = $1
+                l.tournament_id = $1
             `,[tournament_id]
         );
         
