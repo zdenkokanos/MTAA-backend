@@ -63,7 +63,7 @@ const geolib = require('geolib');
  *                   category_image:
  *                     type: string
  *                     example: /images/basketball.png
- *       404:
+ *       204:
  *         description: No tournaments found.
  *       500:
  *         description: Internal server error.
@@ -92,7 +92,7 @@ const getTournaments = async (request, response) => {
         );
 
         if (rows.length === 0) {
-            return response.status(200).json([]); // ← return empty array, it is not error, just empty tournaments
+            return response.status(204).json([]); // ← return empty array, it is not error, just empty tournaments
         }
 
         const tournaments = rows;
@@ -714,6 +714,10 @@ const addTeamToTournament = async (request, response) => {
 
         const ticket_id = memberResult.rows[0].id;
 
+        const io = request.app.get('io');
+        io.to(`tournament-${tournament_id}`).emit('enrolled_updated', { tournament_id });
+
+
         response.status(200).json({ 
             message: "Team and member registered",
             team_code: code,
@@ -819,6 +823,9 @@ const joinTeamAtTournament = async (request, response) => {
              VALUES ($1, $2, $3, $4)`,
             [user_id, team_id, tournament_id, ticket_hash]
         );
+
+        const io = request.app.get('io');
+        io.to(`tournament-${tournament_id}`).emit('enrolled_updated', { tournament_id });
 
         response.status(200).json({ message: "User added to the team" });
     } catch (error) {
