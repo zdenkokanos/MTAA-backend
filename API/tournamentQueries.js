@@ -1,5 +1,6 @@
 const pool = require('./pooling'); // Import the database pool
 const crypto = require('crypto');
+const geolib = require('geolib');
 
 /**
  * @swagger
@@ -91,10 +92,41 @@ const getTournaments = async (request, response) => {
         );
 
         if (rows.length === 0) {
-            return response.status(404).json({ message: "Tournaments are empty" });
+            return response.status(200).json([]); // ← return empty array, it is not error, just empty tournaments
         }
 
-        response.status(200).json(rows); // Return all tournaments
+        const tournaments = rows;
+
+        const userResult = await pool.query(
+            `SELECT preferred_longitude, preferred_latitude FROM users WHERE id = $1`,
+            [user_id]
+        )
+        if (userResult.rows.length === 0){
+            return response.status(404).json({ message: 'User not found' });
+        }
+        const userLat = userResult.rows[0].preferred_latitude;
+        const userLong = userResult.rows[0].preferred_longitude;
+        
+        const tournamentsWithDistance = tournaments.map(t => {
+            const tournamentLat = parseFloat(t.latitude); 
+            const tournamentLong = parseFloat(t.longitude); 
+
+            const distance = geolib.getDistance(
+                { latitude: userLat, longitude: userLong },
+                { latitude: tournamentLat, longitude: tournamentLong }
+            );
+
+            return {
+                ...t, // include all tournament data
+                distance: (distance / 1000).toFixed(2) // convert to kilometers
+            };
+        });
+
+        const sortedTournaments = tournamentsWithDistance.sort((a, b) => {
+            return parseFloat(a.distance) - parseFloat(b.distance);
+        });
+          
+        response.status(200).json(tournamentsWithDistance); // Return all tournaments
     } catch (error) {
         response.status(500).json({ error: error.message });
     }
@@ -1168,5 +1200,5 @@ module.exports = {
     joinTeamAtTournament,
     getEnrolledTeams,
     checkTickets,
-    getTeamCount
+    getTeamCount,
 };
