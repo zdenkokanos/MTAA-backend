@@ -5,6 +5,29 @@ const bodyParser = require('body-parser')
 const app = express()
 const port = 3000
 
+const http = require('http');
+const socketIo = require('socket.io');
+
+//********** WebSockets ************/ 
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: '*', // or specific mobile URL
+  }
+});
+app.set('io', io);
+io.on('connection', (socket) => {
+  console.log('Client connected via WebSocket');
+
+  socket.on('join_room', (room) => {
+    console.log(`Socket joined room: ${room}`);
+    socket.join(room);
+  });
+});
+
+//********** WebSockets ************/ 
+
+
 // Import the multer configuration for file handling
 const upload = require('./multerConfig'); 
 
@@ -103,6 +126,6 @@ app.put('/tournaments/:id/stop', verifyToken, checkUserIdentityTournament, dbTou
 app.delete('/tournaments/leaderboard/remove', verifyToken, dbTournament.removeFromLeaderboard);
 
 // Start the server and listen on specified port
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`App running on port ${port}. Have fun.`)
 })
