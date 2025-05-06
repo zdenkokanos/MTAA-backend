@@ -82,6 +82,39 @@ app.get('/', (request, response) => {
 app.use('/uploads/', express.static(path.join(__dirname, 'uploads/images')));
 app.use('/category/images/', express.static(path.join(__dirname, 'categoryImages')));
 
+// Notifications
+const {
+  savePushToken,
+  sendPushNotificationsToAll,
+} = require('./notifications/push');
+
+app.post('/push-token', async (req, res) => {
+  const { userId, token, platform } = req.body;
+  if (!userId || !token) {
+    return res.status(400).json({ error: 'Missing userId or token' });
+  }
+
+  try {
+    await savePushToken(userId, token, platform);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Failed to save token:', err);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
+app.post('/notify-all', async (req, res) => {
+  const { title = 'Hello!', body = 'Test notification.' } = req.body;
+
+  try {
+    const result = await sendPushNotificationsToAll(title, body);
+    res.json(result);
+  } catch (err) {
+    console.error('Failed to send notifications:', err);
+    res.status(500).json({ error: 'Push send error' });
+  }
+});
+
 //// ## GETs ##
 // Users
 app.get('/users', verifyToken, dbUser.getUsers);
