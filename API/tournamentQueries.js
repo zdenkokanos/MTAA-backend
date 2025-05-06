@@ -784,13 +784,20 @@ const joinTeamAtTournament = async (request, response) => {
         }
 
         // 5. Insert the new member into the team_members table
-        await pool.query(
+        const memberResult = await pool.query(
             `INSERT INTO team_members (user_id, team_id, tournament_id, ticket) 
-             VALUES ($1, $2, $3, $4)`,
+             VALUES ($1, $2, $3, $4)
+             RETURNING id`,
             [user_id, team_id, tournament_id, ticket_hash]
         );
 
-        response.status(200).json({ message: "User added to the team" });
+        const ticket_id = memberResult.rows[0].id;
+
+        response.status(200).json({ message: "User added to the team",  
+            team_code: code,
+            ticket: ticket_hash,
+            ticketId: ticket_id 
+        });
     } catch (error) {
         response.status(500).json({ error: error.message });
     }
