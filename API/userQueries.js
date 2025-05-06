@@ -499,6 +499,7 @@ const getUsersOwnedTournaments = async (request, response) =>{
             t.date,
             t.latitude,
             t.longitude,
+            t.status,
             c.category_image
           FROM
             tournaments t
