@@ -10,6 +10,8 @@ const socketIo = require('socket.io');
 
 const sendPushNotification = require('./pushNotification');
 
+require('./scheduler')
+
 //********** WebSockets ************/ 
 const server = http.createServer(app);
 const io = socketIo(server, {
