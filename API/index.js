@@ -8,6 +8,8 @@ const port = 3000
 const http = require('http');
 const socketIo = require('socket.io');
 
+const sendPushNotification = require('./pushNotification');
+
 //********** WebSockets ************/ 
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -26,7 +28,6 @@ io.on('connection', (socket) => {
 });
 
 //********** WebSockets ************/ 
-
 
 // Import the multer configuration for file handling
 const upload = require('./multerConfig'); 
