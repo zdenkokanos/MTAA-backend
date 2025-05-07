@@ -836,8 +836,7 @@ const joinTeamAtTournament = async (request, response) => {
         });
         const io = request.app.get('io');
         io.to(`tournament-${tournament_id}`).emit('enrolled_updated', { tournament_id });
-
-        response.status(200).json({ message: "User added to the team" });
+        
     } catch (error) {
         response.status(500).json({ error: error.message });
     }
