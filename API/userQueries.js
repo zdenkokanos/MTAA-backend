@@ -651,7 +651,9 @@ const getUserTickets = async (request, response) =>{
               JOIN tournaments t ON tm.tournament_id = t.id
               JOIN sport_category sc ON t.category_id = sc.id
           WHERE
-              user_id = $1`,[user_id]
+              user_id = $1
+          ORDER BY 
+              t.date`,[user_id]
       );
       
       if (result.rowCount === 0){

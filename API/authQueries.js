@@ -103,6 +103,8 @@ const insertUser = async (request, response) => {
         // Hash the password before saving
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+        const { push_token, platform } = request.body;
+
         // Insert user data into the database
         const { rows } = await pool.query(
             `INSERT INTO
@@ -125,6 +127,15 @@ const insertUser = async (request, response) => {
 
         const newUser = rows[0];
         const userId = rows[0].id;
+
+        if (push_token && platform) {
+            await pool.query(
+                `INSERT INTO push_tokens (user_id, token, platform, last_used_at)
+                VALUES ($1, $2, $3, NOW())
+                ON CONFLICT (token) DO UPDATE SET last_used_at = NOW(), user_id = EXCLUDED.user_id;`,
+                [userId, push_token, platform]
+            );
+        }
 
         // Insert user preferences if they exist
         if (Array.isArray(preferences) && preferences.length > 0) {
@@ -204,7 +215,7 @@ const insertUser = async (request, response) => {
  *         description: Internal server error
  */
 const login = async (request, response) => {
-    const { email, password } = request.body;
+    const { email, password, push_token, platform } = request.body;
 
     try {
         const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -218,6 +229,15 @@ const login = async (request, response) => {
     
         if (!passwordMatch) {
           return response.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        if (push_token && platform) {
+            await pool.query(
+                `INSERT INTO push_tokens (user_id, token, platform, last_used_at)
+                VALUES ($1, $2, $3, NOW())
+                ON CONFLICT (token) DO UPDATE SET last_used_at = NOW(), user_id = EXCLUDED.user_id;`,
+                [user.id, push_token, platform]
+            );
         }
 
         // Generate JWT token
