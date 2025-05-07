@@ -3,11 +3,11 @@ const axios = require('axios');
 async function sendPushNotification(expoPushToken, title, body) {
   try {
     const message = {
-      to: expoPushToken,  // Expo push token from the client
+      to: expoPushToken,
       sound: 'default',
-      title: title,      // Title of the notification
-      body: body,        // Body of the notification
-      data: {            // Additional data (optional)
+      title: title,     
+      body: body,        
+      data: {           
         someKey: 'someValue',
       },
     };
