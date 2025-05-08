@@ -284,7 +284,8 @@ const getTournamentInfo = async (request, response) => {
                 t.additional_info,
                 t.status,
                 t.date,
-                sc.category_image
+                sc.category_image,
+                sc.id as category_id
             FROM
                 tournaments t
             JOIN sport_category sc ON t.category_id = sc.id
