@@ -352,12 +352,13 @@ const getLeaderboardByTournament = async (request, response) =>{
                 JOIN teams t ON l.team_id = t.id
             WHERE
                 l.tournament_id = $1
+            ORDER BY l.position
             `,[tournament_id]
         );
         
-        if (result.rowCount === 0){
-            return response.status(404).json({ message: "Tournament not found" });
-        }
+        // if (result.rowCount === 0){
+        //     return response.status(404).json({ message: "Tournament not found" });
+        // }
         response.status(200).json( result.rows )
     } catch (error) {
         response.status(500).json({ error: error.message })
@@ -615,12 +616,16 @@ const addRecordToLeaderboard = async (request, response) => {
     const { tournament_id, team_id, position} = request.body;
 
     try {
+        await pool.query(
+            `DELETE FROM leaderboard WHERE tournament_id = $1 AND position = $2`,
+            [tournament_id, position]
+        );
+
         const result = await pool.query(
-            `INSERT INTO
-                leaderboard (tournament_id, team_id, position) 
-            VALUES
-                ($1, $2, $3)
-            `, [tournament_id, team_id, position]
+            `INSERT INTO leaderboard (tournament_id, team_id, position)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (tournament_id, team_id) 
+            DO UPDATE SET position = EXCLUDED.position;`, [tournament_id, team_id, position]
         );
 
         if (result.rowCount === 0) {
@@ -1184,12 +1189,12 @@ const stopTournament = async (request, response) => {
  *         description: Internal server error, failed to remove record.
  */
 const removeFromLeaderboard = async (request, response) => {
-    const { tournament_id, team_id } = request.body;
+    const { tournament_id, position } = request.body;
     try {
         const result = await pool.query(
             `DELETE FROM leaderboard
-                WHERE tournament_id = $1 AND team_id = $2`,
-            [tournament_id, team_id]
+                WHERE tournament_id = $1 AND position = $2`,
+            [tournament_id, position]
         );
 
         if (result.rowCount === 0) {
