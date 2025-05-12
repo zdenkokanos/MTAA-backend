@@ -418,9 +418,9 @@ const getUsersTournaments = async (request, response) =>{
             c.category_image,
             t.status
           FROM
-            tournaments t
-            JOIN team_members tm ON t.id = tm.tournament_id
-            JOIN sport_category c on c.id = t.category_id
+            team_members tm
+            JOIN tournaments t ON tm.tournament_id = t.id
+            JOIN sport_category c ON t.category_id = c.id
           WHERE
             tm.user_id = $1 AND t.status<>'Closed'`,[user_id]
       );
@@ -650,7 +650,7 @@ const getUserTickets = async (request, response) =>{
               JOIN tournaments t ON tm.tournament_id = t.id
               JOIN sport_category sc ON t.category_id = sc.id
           WHERE
-              user_id = $1
+              user_id = $1 AND t.status != 'Closed'
           ORDER BY 
               t.date`,[user_id]
       );
