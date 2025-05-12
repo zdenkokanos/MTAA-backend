@@ -632,8 +632,6 @@ const getUsersTournamentsHistory = async (request, response) =>{
  *                   category_image:
  *                     type: string
  *                     example: rugby.png
- *       404:
- *         description: Tickets not found
  *       500:
  *         description: Internal server error
  */
@@ -657,7 +655,7 @@ const getUserTickets = async (request, response) =>{
       );
       
       if (result.rowCount === 0){
-          return response.status(404).json({ message: "Tickets not found" });
+          return response.status(200).json({ message: "Tickets not found" });
       }
       response.status(200).json( result.rows )
   } catch (error) {
