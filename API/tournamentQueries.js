@@ -562,6 +562,10 @@ const createTournament = async (request, response) => {
 
         response.status(201).json(rows[0]);
     } catch (error) {
+        if (error.code === '23505') { //PostgreSQL unique_violation error code
+            return response.status(400).json({ message: 'A tournament with this name already exists.' });
+        }
+    
         response.status(500).json({ error: error.message });
     }
 }
@@ -1190,22 +1194,28 @@ const stopTournament = async (request, response) => {
  */
 const removeFromLeaderboard = async (request, response) => {
     const { tournament_id, position } = request.body;
+
+    console.log(`Attempting to delete leaderboard entry: tournament_id=${tournament_id}, position=${position}`);
+
     try {
         const result = await pool.query(
-            `DELETE FROM leaderboard
-                WHERE tournament_id = $1 AND position = $2`,
+            `DELETE FROM leaderboard WHERE tournament_id = $1 AND position = $2`,
             [tournament_id, position]
         );
 
         if (result.rowCount === 0) {
-            return response.status(404).json({ message: "Leaderboard record not found." });
+            console.log("No leaderboard entry found to delete.");
+            return response.status(200).json({ message: "No record to delete (already absent)." });
         }
 
+        console.log("Leaderboard entry deleted.");
         response.status(200).json({ message: "Record removed from leaderboard" });
     } catch (error) {
+        console.error("Error deleting leaderboard entry:", error.message);
         response.status(500).json({ error: error.message });
     }
-}
+};
+
 
 module.exports = {
     getTournaments,

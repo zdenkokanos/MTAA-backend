@@ -85,32 +85,34 @@ app.get('/', (request, response) => {
 
 const fs = require('fs');
 const sharp = require('sharp');
-app.use('/uploads/', express.static(path.join(__dirname, 'uploads/images')));
-// app.use('/category/images/', express.static(path.join(__dirname, 'categoryImages')));
-app.get('/category/images/:filename', async (req, res) => {
-  const filePath = path.join(__dirname, 'categoryImages', req.params.filename);
+
+const serveImageWithGrayscale = (dirPath) => async (req, res) => {
+  const filePath = path.join(__dirname, dirPath, req.params.filename);
   const grayscale = req.query.grayscale === 'true';
 
   if (!fs.existsSync(filePath)) {
-      return res.status(404).send('Image not found');
+    return res.status(404).send('Image not found');
   }
 
   try {
-      const image = sharp(filePath);
+    const image = sharp(filePath);
 
-      if (grayscale) {
-          res.set('Content-Type', 'image/jpeg'); // alebo podľa formátu
-          return image.grayscale().toBuffer().then((data) => res.send(data));
-      } else {
-          // fallback to static file
-          return res.sendFile(filePath);
-      }
+    if (grayscale) {
+      res.set('Content-Type', 'image/jpeg'); // you can enhance this to detect actual type
+      return image.grayscale().toBuffer().then((data) => res.send(data));
+    } else {
+      return res.sendFile(filePath);
+    }
 
   } catch (err) {
-      console.error(err);
-      return res.status(500).send('Failed to process image');
+    console.error(err);
+    return res.status(500).send('Failed to process image');
   }
-});
+};
+
+app.get('/category/images/:filename', serveImageWithGrayscale('categoryImages'));
+app.get('/uploads/:filename', serveImageWithGrayscale('uploads/images'));
+
 
 //// ## GETs ##
 // Users

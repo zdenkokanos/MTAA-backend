@@ -417,11 +417,11 @@ const getUsersTournaments = async (request, response) =>{
             t.longitude,
             c.category_image
           FROM
-            tournaments t
-            JOIN team_members tm ON t.id = tm.tournament_id
-            JOIN sport_category c on c.id = t.category_id
+            team_members tm
+            JOIN tournaments t ON tm.tournament_id = t.id
+            JOIN sport_category c ON t.category_id = c.id
           WHERE
-            tm.user_id = $1 AND t.status='Upcoming'`,[user_id]
+            tm.user_id = $1 AND t.status!='Closed'`,[user_id]
       );
       
       if (result.rowCount === 0){
@@ -632,8 +632,6 @@ const getUsersTournamentsHistory = async (request, response) =>{
  *                   category_image:
  *                     type: string
  *                     example: rugby.png
- *       404:
- *         description: Tickets not found
  *       500:
  *         description: Internal server error
  */
@@ -651,13 +649,13 @@ const getUserTickets = async (request, response) =>{
               JOIN tournaments t ON tm.tournament_id = t.id
               JOIN sport_category sc ON t.category_id = sc.id
           WHERE
-              user_id = $1
+              user_id = $1 AND t.status != 'Closed'
           ORDER BY 
               t.date`,[user_id]
       );
       
       if (result.rowCount === 0){
-          return response.status(404).json({ message: "Tickets not found" });
+          return response.status(200).json({ message: "Tickets not found" });
       }
       response.status(200).json( result.rows )
   } catch (error) {
