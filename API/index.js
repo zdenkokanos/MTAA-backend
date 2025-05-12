@@ -112,7 +112,7 @@ const serveImageWithGrayscale = (dirPath) => async (req, res) => {
 
 app.get('/category/images/:filename', serveImageWithGrayscale('categoryImages'));
 app.get('/uploads/:filename', serveImageWithGrayscale('uploads/images'));
-
+app.post('/tournaments/:id/notify-start', verifyToken, dbTournament.sendTournamentStartNotifications);
 
 //// ## GETs ##
 // Users
