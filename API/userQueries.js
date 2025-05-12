@@ -415,13 +415,14 @@ const getUsersTournaments = async (request, response) =>{
             t.date,
             t.latitude,
             t.longitude,
-            c.category_image
+            c.category_image,
+            t.status
           FROM
             tournaments t
             JOIN team_members tm ON t.id = tm.tournament_id
             JOIN sport_category c on c.id = t.category_id
           WHERE
-            tm.user_id = $1 AND t.status='Upcoming'`,[user_id]
+            tm.user_id = $1 AND t.status<>'Closed'`,[user_id]
       );
       
       if (result.rowCount === 0){
