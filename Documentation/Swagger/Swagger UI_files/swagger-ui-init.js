@@ -253,6 +253,106 @@ window.onload = function() {
           }
         }
       },
+      "/category/images/{filename}": {
+        "get": {
+          "summary": "Get a category image (optionally in grayscale)",
+          "tags": [
+            "Images"
+          ],
+          "description": "Serves a tournament category image from the server. Can be converted to grayscale via query parameter.",
+          "parameters": [
+            {
+              "in": "path",
+              "name": "filename",
+              "required": true,
+              "description": "Name of the image file to retrieve",
+              "schema": {
+                "type": "string",
+                "example": "football.jpg"
+              }
+            },
+            {
+              "in": "query",
+              "name": "grayscale",
+              "required": false,
+              "description": "If true, returns the image in grayscale",
+              "schema": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Image returned successfully.",
+              "content": {
+                "image/jpeg": {
+                  "schema": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Image not found."
+            },
+            "500": {
+              "description": "Failed to process image."
+            }
+          }
+        }
+      },
+      "/uploads/{filename}": {
+        "get": {
+          "summary": "Get a user-uploaded image (optionally in grayscale)",
+          "tags": [
+            "Images"
+          ],
+          "description": "Serves a user-uploaded profile or content image. Can be converted to grayscale via query parameter.",
+          "parameters": [
+            {
+              "in": "path",
+              "name": "filename",
+              "required": true,
+              "description": "Name of the uploaded image file to retrieve",
+              "schema": {
+                "type": "string",
+                "example": "user123.png"
+              }
+            },
+            {
+              "in": "query",
+              "name": "grayscale",
+              "required": false,
+              "description": "If true, returns the image in grayscale",
+              "schema": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Image returned successfully.",
+              "content": {
+                "image/jpeg": {
+                  "schema": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Image not found."
+            },
+            "500": {
+              "description": "Failed to process image."
+            }
+          }
+        }
+      },
       "/tournaments": {
         "get": {
           "summary": "Get all tournaments with sport category filter excluding user’s assigned and owned tournaments",
@@ -325,7 +425,7 @@ window.onload = function() {
                 }
               }
             },
-            "404": {
+            "204": {
               "description": "No tournaments found."
             },
             "500": {
@@ -497,7 +597,7 @@ window.onload = function() {
                 }
               }
             },
-            "404": {
+            "204": {
               "description": "No teams found for the specified tournament"
             },
             "500": {
@@ -1160,6 +1260,55 @@ window.onload = function() {
             },
             "500": {
               "description": "Internal server error."
+            }
+          }
+        }
+      },
+      "/tournaments/{id}/notify-start": {
+        "post": {
+          "summary": "Send start notifications to all users in a tournament",
+          "tags": [
+            "Tournaments"
+          ],
+          "description": "Sends push notifications to all users registered in the tournament that it has started.",
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "description": "The ID of the tournament",
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Notifications sent successfully.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Notifications sent to 8 users"
+                      },
+                      "total": {
+                        "type": "integer",
+                        "example": 8
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Tournament not found."
+            },
+            "500": {
+              "description": "Failed to send notifications."
             }
           }
         }
@@ -1839,9 +1988,6 @@ window.onload = function() {
                 }
               }
             },
-            "404": {
-              "description": "Tickets not found"
-            },
             "500": {
               "description": "Internal server error"
             }
@@ -2041,6 +2187,10 @@ window.onload = function() {
       {
         "name": "Tournaments",
         "description": "Tournament management"
+      },
+      {
+        "name": "Images",
+        "description": "Image delivery and processing (e.g., category and uploaded images)"
       },
       {
         "name": "Users",
