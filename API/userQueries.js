@@ -137,7 +137,7 @@ const getUserInfo = async (request, response) => {
         id,
         first_name,
         last_name,
-        email,
+        email,        preferred_location,
         preferred_longitude,
         preferred_latitude,
         created_at,
@@ -578,14 +578,12 @@ const getUsersTournamentsHistory = async (request, response) =>{
             t.date,
             l."position",
             c.category_image
-          FROM
-            tournaments t
-            JOIN team_members ti ON t.id = ti.tournament_id
-            LEFT JOIN leaderboard l on t.id = l.tournament_id
-            JOIN sport_category c on c.id = t.category_id
-          WHERE
-            ti.user_id = $1
-            AND t.status = 'Closed'`,[user_id]
+          FROM tournaments t
+          JOIN team_members ti ON t.id = ti.tournament_id
+          LEFT JOIN leaderboard l ON l.tournament_id = t.id AND l.team_id = ti.team_id
+          JOIN sport_category c ON c.id = t.category_id
+          WHERE ti.user_id = $1
+          AND t.status = 'Closed'`,[user_id]
       );
       
       if (result.rowCount === 0){
